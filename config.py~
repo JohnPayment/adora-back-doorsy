@@ -4,7 +4,7 @@
 mask = "Bistromath"
 
 # A list of valid passwords which can be used to autheticate when connecting to this program.
-passwords = ["open"]
+password = ["open"]
 # A list of port numbers which must be used in sequence as a port knock when connecting to this program.
 knock = [1,2,3,5]
 # 	NOTE: If both password and knock are enabled, the length of the knock and password must be equal, or else the sequence may not be successful.
@@ -14,9 +14,9 @@ knock = [1,2,3,5]
 reset = [0]
 
 # A list of IP Addresses which can connect to this server.
-sources = []
+source = []
 # A list of ports on which a connection can be established to this server.
-ports = []
+port = []
 
 # The name and directory path of the log file to which log information should be written
 log = "log"

@@ -70,9 +70,8 @@ def checkPassword(ip, ipid):
 	for i in range(0, len(passCheck)):
 		if passCheck[i][0] == ip:
 			passCheck[i][1] += c
-			#Password check should go here
 			found = True
-			break
+			#Password check should go here
 	if found == False:
 		passCheck.append([ip, str(c)])
 	return False
@@ -84,8 +83,6 @@ def checkKnock(ip, port):
 		if knockCheck[i][0] == ip:
 			knockCheck[i][1].append(port)
 			#knock check should go here
-			found = True
-			break
 	if found == False:
 		knockCheck.append([ip, [port]])
 	return False
