@@ -1,8 +1,43 @@
+'''
+--------------------------------------------------------------------------------------------
+-- SCRIPT: doorsy-server.py
+-- 
+-- FUNCTIONS: main
+-- 
+-- DATE: 2014-11-09
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
 from config import *
 from scapy.all import *
 import os
 import setproctitle
 
+'''
+------------------------------------------------------------------------------
+-- 
+-- FUNCTION: main
+-- 
+-- DATE: 2014-11-09
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: main()
+-- 
+-- RETURNS: void
+-- 
+-- NOTES: 
+-- 
+------------------------------------------------------------------------------
+'''
 def main():
 	# Making sure we're running in root
 	if os.geteuid() != 0:
@@ -22,12 +57,12 @@ def main():
 		try:
 			# Setting up the packet filter to limit scanned packets
 			# The stricter the filter, the fewer packets to process and therefore the better the performance
-			packetFilter = "tcp"
+			packetFilter = "tcp ip src not 127.0.0.1"
 			if len(sources) > 0:
 				first = True
 				for source in sources:
 					if first:
-						packetFilter = packetFilter + " (ip src " + source
+						packetFilter = packetFilter + "and (ip src " + source
 						first = False
 					else:
 						packetFilter = packetFilter + " or ip src " + source
@@ -38,6 +73,25 @@ def main():
 		except KeyboardInterrupt:
 			print "Shutting Down"
 
+'''
+------------------------------------------------------------------------------
+-- 
+-- FUNCTION: server
+-- 
+-- DATE: 2014-11-09
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: server()
+-- 
+-- RETURNS: void
+-- 
+-- NOTES: 
+-- 
+------------------------------------------------------------------------------
+'''
 def server():
 	def getResponse(packet):
 		# Check for the reset port first
@@ -54,16 +108,37 @@ def server():
 		if len(passwords) > 0:
 			if checkPassword(packet[IP].src, packet[IP].id):
 				if len(knock) > 0:
-					if checkKnock(packet[IP].src, packet[TCP].sport):
+					if checkKnock(packet[IP].src, packet[TCP].dport):
 						clientCommands(packet)
 				else:
 					clientCommands(packet)
 		if len(knock) > 0:
-			if checkKnock(packet[IP].src, packet[TCP].sport):
+			if checkKnock(packet[IP].src, packet[TCP].dport):
 				clientCommands(packet)
 
 	return getResponse
 
+'''
+------------------------------------------------------------------------------
+-- 
+-- FUNCTION: checkPassword
+-- 
+-- DATE: 2014-11-09
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: checkPassword(ip, ipid)
+--              ip   - The IP Address from which the packet was received
+--              ipid - The ipid of the received packet
+-- 
+-- RETURNS: True on password match, otherwise False
+-- 
+-- NOTES: 
+-- 
+------------------------------------------------------------------------------
+'''
 passCheck = []
 def checkPassword(ip, ipid):
 	found = False
@@ -91,6 +166,27 @@ def checkPassword(ip, ipid):
 		passCheck.append([ip, str(c)])
 	return False
 
+'''
+------------------------------------------------------------------------------
+-- 
+-- FUNCTION: checkKnock
+-- 
+-- DATE: 2014-11-09
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: checkKnock(ip, port)
+--              ip   - The IP Address from which the packet was received
+--              port - The destination port of the received packet
+-- 
+-- RETURNS: True on password match, otherwise False
+-- 
+-- NOTES: 
+-- 
+------------------------------------------------------------------------------
+'''
 knockCheck = []
 def checkKnock(ip, port):
 	found = False
@@ -117,6 +213,26 @@ def checkKnock(ip, port):
 		knockCheck.append([ip, [port]])
 	return False
 
+'''
+------------------------------------------------------------------------------
+-- 
+-- FUNCTION: clientCommands
+-- 
+-- DATE: 2014-11-09
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: clientCommands(packet)
+--              packet - The last packet received in the password/knock sequence
+-- 
+-- RETURNS: void
+-- 
+-- NOTES: 
+-- 
+------------------------------------------------------------------------------
+'''
 def clientCommands(packet)
 	print "Do stuff"
 
