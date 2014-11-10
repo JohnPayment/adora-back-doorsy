@@ -116,11 +116,12 @@ def main():
 def sendKnock(address, password, knock):
 	seq = random.randint(0, 16777215)
 	idpass = random.randint(0, 127)
+
 	if len(knock) < 1:
 		for c in password:
 			port = random.randint(0, 65535)
 			knockPacket = IP(dst=address, id=(idpass<<8) + ord(c))/\
-			              TCP(dport=port, seq=seq)
+			              TCP(sport=random.randint(0, 65535), dport=port, seq=seq)
 			seq += 1
 			idpass += 1
 
@@ -139,7 +140,7 @@ def sendKnock(address, password, knock):
 				ipHead.id = ipid
 				ipid += 1
 			knockPacket = ipHead/\
-			              TCP(dport=port, seq=seq)
+			              TCP(sport=random.randint(0, 65535), dport=port, seq=seq)
 			seq += 1
 
 			send(knockPacket, verbose=0)
