@@ -55,12 +55,12 @@ def server():
 			if checkPassword(packet[IP].src, packet[IP].id):
 				if len(knock) > 0:
 					if checkKnock(packet[IP].src, packet[TCP].sport):
-						print "Do stuff"
+						clientCommands(packet)
 				else:
-					print "Do stuff"
+					clientCommands(packet)
 		if len(knock) > 0:
 			if checkKnock(packet[IP].src, packet[TCP].sport):
-				print "Do stuff"
+				clientCommands(packet)
 
 	return getResponse
 
@@ -116,6 +116,9 @@ def checkKnock(ip, port):
 	if found == False:
 		knockCheck.append([ip, [port]])
 	return False
+
+def clientCommands(packet)
+	print "Do stuff"
 
 main()
 
