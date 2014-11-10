@@ -114,7 +114,7 @@ def main():
 ---------------------------------------------------------------------------------------------
 '''
 def sendKnock(address, password, knock):
-	seq = random.randint(0, 65535)
+	seq = random.randint(0, 16777215)
 	idpass = random.randint(0, 127)
 	if len(knock) < 1:
 		for c in password:
