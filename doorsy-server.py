@@ -1,6 +1,7 @@
 from config import *
-import os
 from scapy.all import *
+import os
+import setproctitle
 
 def main():
 	# Making sure we're running in root
@@ -10,7 +11,7 @@ def main():
 
 	# Making sure we have at least 1 password or knock.
 	# We need either a password or a knock in order for remote access to work
-	if len(password) < 1 and len(knock) < 1:
+	if len(passwords) < 1 and len(knock) < 1:
 		print "Check Config: Program must have at least 1 password or knock sequence"
 		return
 	else:
@@ -70,9 +71,22 @@ def checkPassword(ip, ipid):
 	for i in range(0, len(passCheck)):
 		if passCheck[i][0] == ip:
 			passCheck[i][1] += c
-			#Password check should go here
+
+			tooLong = True
+			for password in passwords:
+				# Only compare to passwords short enough to be contained within the password buffer
+				if len(passCheck[i]) >= len(password):
+					if password in passCheck[i]:
+						return True
+				elif len(knock) == 0:
+					tooLong = False
+
+			# If the knock is disabled, clear the buffer once it's longer than the longest password
+			if tooLong and len(knock) == 0:
+				passCheck.pop(i)
 			found = True
 			break
+
 	if found == False:
 		passCheck.append([ip, str(c)])
 	return False
@@ -83,7 +97,20 @@ def checkKnock(ip, port):
 	for i in range(0, len(knockCheck)):
 		if knockCheck[i][0] == ip:
 			knockCheck[i][1].append(port)
-			#knock check should go here
+
+			# Once we've collected enough knocks, check for a valid sequence
+			if len(knockCheck) == len(knock):
+				goodKnock = True
+				for j in range(0, len(knock)):
+					if knock[j] != knockCheck[i][j]:
+						googKnock = False
+				if goodKnock:
+					return True
+				else:
+					# If it's invalid then flush the buffer
+					knockCheck.pop(i)
+					return False
+
 			found = True
 			break
 	if found == False:
