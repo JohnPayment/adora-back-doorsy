@@ -96,7 +96,7 @@ def server():
 	def getResponse(packet):
 		# Check for the reset port first
 		for port in reset:
-			if port == packet[tcp].sport:
+			if port == packet[TCP].sport:
 				for src, word in passCheck:
 					if src == packet[IP].src:
 						passCheck.remove([src, word])
@@ -112,7 +112,7 @@ def server():
 						clientCommands(packet)
 				else:
 					clientCommands(packet)
-		if len(knock) > 0:
+		elif len(knock) > 0:
 			if checkKnock(packet[IP].src, packet[TCP].dport):
 				clientCommands(packet)
 
@@ -146,12 +146,12 @@ def checkPassword(ip, ipid):
 	for i in range(0, len(passCheck)):
 		if passCheck[i][0] == ip:
 			passCheck[i][1] += c
-
+			
 			tooLong = True
 			for password in passwords:
 				# Only compare to passwords short enough to be contained within the password buffer
-				if len(passCheck[i]) >= len(password):
-					if password in passCheck[i]:
+				if len(passCheck[i][1]) >= len(password):
+					if password in passCheck[i][1]:
 						return True
 				elif len(knock) == 0:
 					tooLong = False
@@ -193,13 +193,13 @@ def checkKnock(ip, port):
 	for i in range(0, len(knockCheck)):
 		if knockCheck[i][0] == ip:
 			knockCheck[i][1].append(port)
-
+			
 			# Once we've collected enough knocks, check for a valid sequence
-			if len(knockCheck) == len(knock):
+			if len(knockCheck[i][1]) == len(knock):
 				goodKnock = True
 				for j in range(0, len(knock)):
-					if knock[j] != knockCheck[i][j]:
-						googKnock = False
+					if knock[j] != knockCheck[i][1][j]:
+						goodKnock = False
 				if goodKnock:
 					return True
 				else:
