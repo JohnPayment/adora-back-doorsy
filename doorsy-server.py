@@ -57,7 +57,7 @@ def main():
 		try:
 			# Setting up the packet filter to limit scanned packets
 			# The stricter the filter, the fewer packets to process and therefore the better the performance
-			packetFilter = "tcp ip src not 127.0.0.1"
+			packetFilter = "tcp and ip src not 127.0.0.1"
 			if len(sources) > 0:
 				first = True
 				for source in sources:
@@ -233,7 +233,7 @@ def checkKnock(ip, port):
 -- 
 ------------------------------------------------------------------------------
 '''
-def clientCommands(packet)
+def clientCommands(packet):
 	print "Connection Established with " + packet[IP].src
 
 main()
