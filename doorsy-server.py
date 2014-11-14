@@ -234,7 +234,7 @@ def checkKnock(ip, port):
 ------------------------------------------------------------------------------
 '''
 def clientCommands(packet)
-	print "Do stuff"
+	print "Connection Established with " + packet[IP].src
 
 main()
 
