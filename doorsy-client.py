@@ -39,6 +39,7 @@ import random
 '''
 def main():
 	address = "127.0.0.1"
+	port = 0
 	password = ""
 	knock = []
 	warnings = ""
@@ -54,20 +55,26 @@ def main():
 		warnings = ""
 
 		print "Server Address:  " + address
+		print "Port: " + str(port)
 		print "Password:        " + password
 		print "Knock Sequence:  " + str(knock)
 		print " "
 		print "-Commands-"
 		print "A - change server address"
+		print "D - change command port"
 		print "P - change password"
 		print "K - change knock sequence"
 		print "R - Run Connection Sequence"
+		print "Q - Exit program"
 		print "Input Command: "
 
 		choice = raw_input()
 		if choice == 'A' or choice == 'a':
 			print "Input new server address: "
 			address = raw_input()
+		elif choice == 'D' or choice == 'd':
+			print "Input new Port: "
+			port = raw_input()
 		elif choice == 'P' or choice == 'p':
 			print "Input new Password: "
 			password = raw_input()
@@ -86,9 +93,13 @@ def main():
 			else:
 				try:
 					sendKnock(address, password, knock)
+					if checkAuthenticate(address, port):
+						sendCommand(address, port)
 				except KeyboardInterrupt:
 					print "Shutting Down"
-				return
+				continue
+		elif choice == 'Q' or choice == "q":
+			return
 		print "\n"
 
 '''
@@ -144,6 +155,20 @@ def sendKnock(address, password, knock):
 			seq += 1
 
 			send(knockPacket, verbose=0)
+
+def checkAuthenticate(address, port):
+	packetFilter = ""
+	packetFilter = "tcp and ip src " + address
+	
+	packets = sniff(count=1, filter=packetFilter, timeout=10)
+
+	if len(packets) == 0:
+		return False
+	else:
+		return True
+
+def sendCommand():
+	print "do stuff"
 
 main()
 

