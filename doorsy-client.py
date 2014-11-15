@@ -183,7 +183,7 @@ def checkAuthenticate(address, port):
 	packetFilter = ""
 	packetFilter = "tcp and ip src " + address
 	
-	packets = sniff(count=1, filter=packetFilter, timeout=10)
+	packets = sniff(count=1, filter=packetFilter, timeout=30)
 
 	if len(packets) == 0:
 		return False
@@ -349,6 +349,11 @@ def terminal(address, port, command):
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="S")/\
 	                RAW(load=encrypt(command))
 	send(commandPacket, verose=0)
+	packets = sniff(count=1, filter="tcp src port " + str(port) + " and ip src " + address, timeout=30)
+	if len(packets) == 0:
+		print "Timeout. reply not received."
+	else:
+		print encrypt(packets[0][RAW].load)
 
 '''
 ---------------------------------------------------------------------------------------------

