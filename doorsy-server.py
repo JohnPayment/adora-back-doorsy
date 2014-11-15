@@ -269,9 +269,36 @@ def clientCommands(packet):
 			packetFilter = packetFilter + ")"
 
 		# Beginning Packet sniffing
-		sniff(filter=packetFilter, prn=server())
+		sniff(filter=packetFilter, prn=server(), timeout=300)		
+
 	except KeyboardInterrupt:
-		print "Shutting Down"
+		print ""
+	print "Shutting Down"
+
+'''
+------------------------------------------------------------------------------
+-- 
+-- FUNCTION: commandParser
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: commandParser()
+-- 
+-- RETURNS: void
+-- 
+-- NOTES: 
+-- 
+------------------------------------------------------------------------------
+'''
+def commandParser():
+	def getResponse(packet):
+		print "Do Stuff"
+
+	return getResponse
 
 main()
 
