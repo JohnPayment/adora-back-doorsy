@@ -289,7 +289,8 @@ def sendCommand(address, port):
 def sendFile(address, port, sFile):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
-	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215))
+	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215))/\
+	                raw(LOAD=sFile)
 	send(commandPacket, verose=0)
 
 '''
@@ -316,7 +317,8 @@ def sendFile(address, port, sFile):
 def getFile(address, port, gFile):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
-	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="A")
+	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="A")/\
+	                RAW(load=gFile)
 	send(commandPacket, verose=0)
 
 '''
@@ -344,7 +346,8 @@ def getFile(address, port, gFile):
 def terminal(address, port, command):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
-	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="S")
+	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="S")/\
+	                RAW(load=command)
 	send(commandPacket, verose=0)
 
 '''
@@ -372,7 +375,8 @@ def terminal(address, port, command):
 def notify(address, port, notice):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
-	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="AS")
+	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="AS")/\
+	                RAW(load=notice)
 	send(commandPacket, verose=0)
 
 '''
