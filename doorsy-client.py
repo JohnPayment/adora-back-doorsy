@@ -41,10 +41,10 @@ import random
 protocol = "tcp"
 def main():
 	global protocol
-	address = "127.0.0.1"
-	port = 0
+	address = "192.168.0.11"
+	port = 80
 	password = ""
-	knock = []
+	knock = [1,2,3,5]
 	warnings = ""
 
 	# Making sure we're running in root
@@ -57,6 +57,7 @@ def main():
 		print warnings
 		warnings = ""
 
+		print "Protocol:  " + protocol
 		print "Server Address:  " + address
 		print "Port: " + str(port)
 		print "Password:        " + password
