@@ -262,16 +262,7 @@ def clientCommands(packet):
 	try:
 		# Setting up the packet filter to limit scanned packets
 		# The stricter the filter, the fewer packets to process and therefore the better the performance
-		packetFilter = "tcp and ip src " + packet[IP].src
-		if len(ports) > 0:
-			first = True
-			for source in ports:
-				if first:
-					packetFilter = packetFilter + "and (src port " + source
-					first = False
-				else:
-					packetFilter = packetFilter + " or src port " + source
-			packetFilter = packetFilter + ")"
+		packetFilter = "tcp and ip src " + packet[IP].src + " and sport " + str(confirmPacket[TCP].dport)
 
 		# Beginning Packet sniffing
 		sniff(filter=packetFilter, prn=server(), timeout=300)
