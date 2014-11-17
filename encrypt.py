@@ -27,7 +27,7 @@ def encrypt(message):
 		for char in message:
 			char = chr(ord(char) ^ ord(key[i]))
 			i = i + 1
-			if len(key) < i:
+			if len(key) <= i:
 				i = 0
 	return newMessage
 
