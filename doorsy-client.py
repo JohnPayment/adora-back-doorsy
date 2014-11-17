@@ -116,8 +116,9 @@ def main():
 -- 
 -- PROGRAMMER: John Payment
 -- 
--- INTERFACE: sendKnock(address, password, knock)
+-- INTERFACE: sendKnock(address, commandPort, password, knock)
 --              address - The address of the server
+--              commandPort - The port to which you want to send commands
 --              password - The password, if any, which will be used to autheticate to the server
 --              knock - The knock sequence, if any, which will be used to autheticate to the server
 -- 
@@ -127,7 +128,7 @@ def main():
 -- 
 ---------------------------------------------------------------------------------------------
 '''
-def sendKnock(address, password, knock):
+def sendKnock(address, commandPort, password, knock):
 	seq = random.randint(0, 16777215)
 	idpass = random.randint(0, 127)
 
@@ -135,7 +136,7 @@ def sendKnock(address, password, knock):
 		for c in password:
 			port = random.randint(0, 65535)
 			knockPacket = IP(dst=address, id=(idpass<<8) + ord(c))/\
-			              TCP(sport=random.randint(0, 65535), dport=port, seq=seq)
+			              TCP(sport=commandPort, dport=port, seq=seq)
 			seq += 1
 			idpass += 1
 
@@ -154,7 +155,7 @@ def sendKnock(address, password, knock):
 				ipHead.id = ipid
 				ipid += 1
 			knockPacket = ipHead/\
-			              TCP(sport=random.randint(0, 65535), dport=port, seq=seq)
+			              TCP(sport=commandPort, dport=port, seq=seq)
 			seq += 1
 
 			send(knockPacket, verbose=0)
@@ -189,6 +190,7 @@ def checkAuthenticate(address, port):
 	if len(packets) == 0:
 		return False
 	else:
+		port = packets[0][TCP].dport
 		return True
 
 '''

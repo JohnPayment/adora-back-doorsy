@@ -253,7 +253,10 @@ def clientCommands(packet):
 	ipid = random.randint(0, 65535)
 
 	confirmPacket = IP(dst=packet[IP].src, id=ipid)/\
-	                TCP(sport=random.randint(0, 65535), dport=packet[TCP].src, seq=seq)
+	                TCP(sport=random.randint(0, 65535), dport=packet[TCP].sport, seq=seq)
+	if (len(ports) > 0) or (packet[TCP].sport not in ports):
+		confirmPacket[TCP].dport = random.choose(ports)
+
 	send(confirmPacket, verbose=0)
 
 	try:
