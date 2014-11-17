@@ -397,10 +397,12 @@ def sendFile(packet):
 				dPacket = sniff(filter=protocol + " src port " + str(packet[TCP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
 				if len(dPacket) == 0:
 					break
-				if dPacket[0].haslayer(Raw) != True:
+				if dPacket[0].haslayer(TCP) != True:
 					continue
 				if dPacket[0][TCP].flags == 1:
 					break
+				if dPacket[0].haslayer(RAW) != True:
+					continue
 				tFile.write(encrypt(dPacket[0][Raw].load))
 	elif packet.haslayer(UDP):
 		with open(packet[Raw].load, "w") as tFile:
