@@ -1,4 +1,4 @@
-keys = ["This is the first key", "ABCDEFGHIJKLMNOP", "Keys are applied sequentially such that patterns cause by them being shorter than the payload become obscured."
+keys = ["This is the first key", "ABCDEFGHIJKLMNOP", "Keys are applied sequentially such that patterns cause by them being shorter than the payload become obscured."]
 
 '''
 ---------------------------------------------------------------------------------------------
