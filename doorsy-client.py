@@ -380,12 +380,20 @@ def getFile(address, port, gFile):
 
 	with open(gFile, "w") as tFile:
 		while True:
-			dPacket = sniff(filter=protocol + " and src port " + str(port) + " and ip src " + address, count=1, timeout=30)
+			dPacket = sniff(filter=protocol + " src port " + str(packet[TCP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
 			if len(dPacket) == 0:
 				break
-			if "F" in dPacket[0][TCP].flags:
-				break
-			tFile.write(dPacket[Raw].load)
+			if dPacket[0].haslayer(TCP) == True:
+				if dPacket[0][TCP].flags == 1:
+					break
+			elif dPacket[0].haslayer(TCP) == True:
+				if dPacket[0][UDP].sport == 0:
+					break
+			else:
+				continue
+			if dPacket[0].haslayer(RAW) != True:
+				continue
+			tFile.write(encrypt(dPacket[0][Raw].load))
 '''
 ---------------------------------------------------------------------------------------------
 -- 
