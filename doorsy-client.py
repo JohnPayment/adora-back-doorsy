@@ -318,7 +318,7 @@ def sendFile(address, port, sFile):
 	if protocol == "tcp":
 		commandPacket = IP(dst=address, id=random.randint(0, 65535))/\
 			            TCP(sport=random.randint(0, 65535), dport=port, seq=random.randint(0, 16777215), flags="")/\
-			            Raw(load=encrypt(sFile))
+			            Raw(load=encrypt(sFile.split("/")[len(sFile.split("/"))-1]))
 		send(commandPacket, verbose=0)
 		with open(sFile, "r") as tFile:
 			for line in tFile:
@@ -378,7 +378,7 @@ def getFile(address, port, gFile):
 			            Raw(load=encrypt(gFile))
 	send(commandPacket, verbose=0)
 
-	with open(gFile, "w") as tFile:
+	with open(gFile.split("/")[len(gFile.split("/"))-1], "w") as tFile:
 		while True:
 			dPacket = sniff(filter=protocol + " src port " + str(port) + " and ip src " + address, count=1, timeout=30)
 			if len(dPacket) == 0:
