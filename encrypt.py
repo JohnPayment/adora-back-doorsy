@@ -25,7 +25,7 @@ def encrypt(message):
 	for key in keys:
 		i = 0
 		for char in message:
-			newMessage.append(chr(ord(char) ^ ord(key[i])))
+			newMessage = newMessage + (chr(ord(char) ^ ord(key[i])))
 			i = i + 1
 			if len(key) <= i:
 				i = 0
