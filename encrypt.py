@@ -21,7 +21,7 @@ keys = ["This is the first key", "ABCDEFGHIJKLMNOP", "Keys are applied sequentia
 ---------------------------------------------------------------------------------------------
 '''
 def encrypt(message):
-	newMessage
+	newMessage = ""
 	for key in keys:
 		i = 0
 		for char in message:
