@@ -21,11 +21,11 @@ keys = ["This is the first key", "ABCDEFGHIJKLMNOP", "Keys are applied sequentia
 ---------------------------------------------------------------------------------------------
 '''
 def encrypt(message):
-	newMessage = message
+	newMessage
 	for key in keys:
 		i = 0
-		for char in newMessage:
-			char = chr(ord(char) ^ ord(key[i]))
+		for char in message:
+			newMessage.append(chr(ord(char) ^ ord(key[i])))
 			i = i + 1
 			if len(key) <= i:
 				i = 0
