@@ -8,7 +8,7 @@ mask = "Bistromath"
 protocol = "tcp"
 
 # A list of valid passwords which can be used to autheticate when connecting to this program.
-passwords = ["open"]
+passwords = []
 # A list of port numbers which must be used in sequence as a port knock when connecting to this program.
 knock = [1,2,3,5]
 # 	NOTE: If both password and knock are enabled, the length of the knock and password must be equal, or else the sequence may not be successful.

