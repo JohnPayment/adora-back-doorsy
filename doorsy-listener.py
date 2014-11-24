@@ -3,6 +3,9 @@
 -- SCRIPT: doorsy-listener.py
 -- 
 -- FUNCTIONS: main
+--            server
+--            checkKnock
+--            clientCommands
 -- 
 -- DATE: 2014-11-18
 -- 
@@ -37,7 +40,7 @@ import subprocess
 -- 
 -- RETURNS: void
 -- 
--- NOTES: 
+-- NOTES: Initializes and runs listener
 -- 
 ------------------------------------------------------------------------------
 '''
@@ -95,7 +98,7 @@ def main():
 -- 
 -- RETURNS: void
 -- 
--- NOTES: 
+-- NOTES: Listens for authetication
 -- 
 ------------------------------------------------------------------------------
 '''
@@ -134,7 +137,7 @@ def server():
 -- 
 -- RETURNS: True on password match, otherwise False
 -- 
--- NOTES: 
+-- NOTES: Checks for valid knock sequence
 -- 
 ------------------------------------------------------------------------------
 '''
@@ -181,7 +184,7 @@ def checkKnock(ip, port):
 -- 
 -- RETURNS: void
 -- 
--- NOTES: 
+-- NOTES: Receives files
 -- 
 ------------------------------------------------------------------------------
 '''

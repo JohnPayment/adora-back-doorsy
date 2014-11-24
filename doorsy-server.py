@@ -3,6 +3,15 @@
 -- SCRIPT: doorsy-server.py
 -- 
 -- FUNCTIONS: main
+--            server
+--            checkPassword
+--            checkKnock
+--            clientCommands
+--            commandParser
+--            sendFile
+--            getFile
+--            terminal
+--            notify
 -- 
 -- DATE: 2014-11-09
 -- 
@@ -39,7 +48,7 @@ import pyinotify
 -- 
 -- RETURNS: void
 -- 
--- NOTES: 
+-- NOTES: Initiallizes server and runs autentication listener
 -- 
 ------------------------------------------------------------------------------
 '''
@@ -98,7 +107,7 @@ def main():
 -- 
 -- RETURNS: void
 -- 
--- NOTES: 
+-- NOTES: Runs authentication sequence on received packets
 -- 
 ------------------------------------------------------------------------------
 '''
@@ -167,7 +176,7 @@ def server():
 -- 
 -- RETURNS: True on password match, otherwise False
 -- 
--- NOTES: 
+-- NOTES: Checks packets for valid password
 -- 
 ------------------------------------------------------------------------------
 '''
@@ -216,7 +225,7 @@ def checkPassword(ip, ipid):
 -- 
 -- RETURNS: True on password match, otherwise False
 -- 
--- NOTES: 
+-- NOTES: checks packest for valid knock sequence
 -- 
 ------------------------------------------------------------------------------
 '''
@@ -263,8 +272,8 @@ def checkKnock(ip, port):
 -- 
 -- RETURNS: void
 -- 
--- NOTES: 
--- 
+-- NOTES: sends response packet to client to confirm successful authentication
+--        and starts up command listener.
 ------------------------------------------------------------------------------
 '''
 def clientCommands(packet):
@@ -320,7 +329,7 @@ def clientCommands(packet):
 -- 
 -- RETURNS: void
 -- 
--- NOTES: 
+-- NOTES: Listens for and interprets commands from client.
 --
 -- --Server Codes--
 --       A S F 
@@ -386,7 +395,7 @@ def commandParser():
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
+-- NOTES: receive a file from the client.
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -433,7 +442,7 @@ def sendFile(packet):
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
+-- NOTES: send a file to the client
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -501,7 +510,7 @@ def getFile(packet):
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
+-- NOTES: Runs a terminal command provided by the client and sends the results back to it.
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -560,8 +569,8 @@ def terminal(packet):
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
--- 
+-- NOTES: Monitors a specified file or folder and sends changed files to a specified
+--        listener address.
 ---------------------------------------------------------------------------------------------
 '''
 listenerIP = []

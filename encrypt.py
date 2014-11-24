@@ -14,9 +14,9 @@ keys = ["This is the first key", "ABCDEFGHIJKLMNOP", "Keys are applied sequentia
 -- INTERFACE: encrypt(message)
 --              message - The message to be encrypted or decryped
 -- 
--- RETURNS: N/A
+-- RETURNS: The Encrypted string
 -- 
--- NOTES: 
+-- NOTES: Encrypts (or decrypts) a string using a XOR cypher and a series of pre-defined key phrases.
 -- 
 ---------------------------------------------------------------------------------------------
 '''

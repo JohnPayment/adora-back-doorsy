@@ -3,6 +3,14 @@
 -- SCRIPT: doorsy-client.py
 -- 
 -- FUNCTIONS: main
+--            sendKnock
+--            checkAutenticate
+--            sendCommand
+--            sendFile
+--            getFile
+--            terminal
+--            notify
+--            kill
 -- 
 -- DATE: 2014-11-09
 -- 
@@ -10,7 +18,7 @@
 -- 
 -- PROGRAMMER: John Payment
 -- 
--- NOTES: 
+-- NOTES: Client script for doorsy backdoor server
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -35,7 +43,7 @@ import time
 -- 
 -- RETURNS: void
 -- 
--- NOTES: 
+-- NOTES: Sets user parameters and starts up the knock sequence.
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -143,7 +151,7 @@ def main():
 -- 
 -- RETURNS: Returns true on successful connection, otherwise False
 -- 
--- NOTES: 
+-- NOTES: Sends the knock sequence to the server
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -207,7 +215,7 @@ def sendKnock(address, commandPort, password, knock):
 -- 
 -- RETURNS: Returns true on auth packet received, otherwise false
 -- 
--- NOTES: 
+-- NOTES: Checks for a response packet from the server to varify a successful connection.
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -242,8 +250,8 @@ def checkAuthenticate(address, port):
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
--- 
+-- NOTES: Queries the user for a command to send to the server and then starts up the
+--        appropriate command function.
 ---------------------------------------------------------------------------------------------
 '''
 def sendCommand(address, port):
@@ -318,7 +326,7 @@ def sendCommand(address, port):
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
+-- NOTES: Sends a file to the server from the client
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -377,7 +385,7 @@ def sendFile(address, port, sFile):
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
+-- NOTES: receives a file from the server
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -426,7 +434,7 @@ def getFile(address, port, gFile):
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
+-- NOTES: Sends a terminal command and receives the results of that command.
 -- 
 ---------------------------------------------------------------------------------------------
 '''
@@ -490,8 +498,8 @@ def terminal(address, port, command):
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
--- 
+-- NOTES: Specifies a directory or file which should be watched by the server as well as
+--        the ip address of the listener to which changes should be reported.
 ---------------------------------------------------------------------------------------------
 '''
 def notify(address, port, notice, listener):
@@ -522,7 +530,7 @@ def notify(address, port, notice, listener):
 -- 
 -- RETURNS: N/A
 -- 
--- NOTES: 
+-- NOTES: Terminates the connection between the client and server.
 -- 
 ---------------------------------------------------------------------------------------------
 '''
