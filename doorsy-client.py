@@ -257,7 +257,7 @@ def checkAuthenticate(address, port):
 def sendCommand(address, port):
 	warnings = ""
 	while True:
-		os.system("clear")
+		print "\n\n"
 		print warnings
 		warnings = ""
 
